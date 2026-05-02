@@ -44,7 +44,7 @@ Phase 13 ──► Phase 14 ──► Phase 15 ──► Phase 16 ──► Phas
 
 | # | File | Title | Screens | Status |
 |---|---|---|---|---|
-| 01 | [phase-01-setup.md](./phase-01-setup.md) | Project Setup & Architecture | 0 screens, foundational | TODO |
+| 01 | [phase-01-setup.md](./phase-01-setup.md) | Project Setup & Architecture | 0 screens, foundational | DONE ✅ |
 | 02 | [phase-02-authentication.md](./phase-02-authentication.md) | Authentication & Session | 4 screens | TODO |
 | 03 | [phase-03-navigation.md](./phase-03-navigation.md) | Navigation & Role Routing | Shell + Tab bars | TODO |
 | 04 | [phase-04-home-dashboard.md](./phase-04-home-dashboard.md) | Home Screen & FM Dashboard | 3 screens | TODO |
