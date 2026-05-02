@@ -1,6 +1,6 @@
 # Phase 01 — Project Setup & Architecture
 
-**Status:** TODO  
+**Status:** IN_PROGRESS  
 **Estimated Time:** 2–3 days  
 **Blocks:** All subsequent phases  
 **No backend dependency** — this is pure project scaffolding.
