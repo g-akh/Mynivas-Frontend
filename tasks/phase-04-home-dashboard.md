@@ -1,6 +1,6 @@
 # Phase 04 — Home Screen & FM Dashboard
 
-**Status:** TODO  
+**Status:** DONE  
 **Estimated Time:** 4–5 days  
 **Depends on:** Phase 03  
 **Blocks:** None (parallel with Phase 05+)

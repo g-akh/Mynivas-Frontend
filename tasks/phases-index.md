@@ -47,7 +47,7 @@ Phase 13 ──► Phase 14 ──► Phase 15 ──► Phase 16 ──► Phas
 | 01 | [phase-01-setup.md](./phase-01-setup.md) | Project Setup & Architecture | 0 screens, foundational | DONE ✅ |
 | 02 | [phase-02-authentication.md](./phase-02-authentication.md) | Authentication & Session | 4 screens | DONE ✅ |
 | 03 | [phase-03-navigation.md](./phase-03-navigation.md) | Navigation & Role Routing | Shell + Tab bars | DONE ✅ |
-| 04 | [phase-04-home-dashboard.md](./phase-04-home-dashboard.md) | Home Screen & FM Dashboard | 3 screens | TODO |
+| 04 | [phase-04-home-dashboard.md](./phase-04-home-dashboard.md) | Home Screen & FM Dashboard | 3 screens | DONE ✅ |
 | 05 | [phase-05-complaints.md](./phase-05-complaints.md) | Complaints / Helpdesk | 5 screens | TODO |
 | 06 | [phase-06-visitors.md](./phase-06-visitors.md) | Visitor Management + Gate | 6 screens | TODO |
 | 07 | [phase-07-announcements.md](./phase-07-announcements.md) | Announcements & Polls | 5 screens | TODO |
