@@ -1,6 +1,6 @@
 # Phase 13 — Push Notifications & In-App Notification Center
 
-**Status:** TODO  
+**Status:** DONE  
 **Estimated Time:** 2–3 days  
 **Depends on:** Phase 02 (push token registration)  
 

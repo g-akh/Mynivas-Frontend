@@ -48,18 +48,18 @@ Phase 13 ──► Phase 14 ──► Phase 15 ──► Phase 16 ──► Phas
 | 02 | [phase-02-authentication.md](./phase-02-authentication.md) | Authentication & Session | 4 screens | DONE ✅ |
 | 03 | [phase-03-navigation.md](./phase-03-navigation.md) | Navigation & Role Routing | Shell + Tab bars | DONE ✅ |
 | 04 | [phase-04-home-dashboard.md](./phase-04-home-dashboard.md) | Home Screen & FM Dashboard | 3 screens | DONE ✅ |
-| 05 | [phase-05-complaints.md](./phase-05-complaints.md) | Complaints / Helpdesk | 5 screens | TODO |
-| 06 | [phase-06-visitors.md](./phase-06-visitors.md) | Visitor Management + Gate | 6 screens | TODO |
-| 07 | [phase-07-announcements.md](./phase-07-announcements.md) | Announcements & Polls | 5 screens | TODO |
-| 08 | [phase-08-work-orders-ppm.md](./phase-08-work-orders-ppm.md) | Work Orders & PPM | 6 screens | TODO |
-| 09 | [phase-09-amenities.md](./phase-09-amenities.md) | Amenity Booking | 7 screens | TODO |
-| 10 | [phase-10-documents.md](./phase-10-documents.md) | Document Management | 5 screens | TODO |
-| 11 | [phase-11-reports.md](./phase-11-reports.md) | Reports & Analytics | 6 screens | TODO |
-| 12 | [phase-12-admin-panel.md](./phase-12-admin-panel.md) | Admin Panel (Super Admin / Tenant Admin) | 8 screens | TODO |
-| 13 | [phase-13-notifications.md](./phase-13-notifications.md) | Push Notifications & In-App | 2 screens | TODO |
-| 14 | [phase-14-billing.md](./phase-14-billing.md) | Billing & Dues | 5 screens | TODO |
-| 15 | [phase-15-plans.md](./phase-15-plans.md) | Plans, Subscriptions & Feature Gating | 4 screens | TODO |
-| 16 | [phase-16-profile-settings.md](./phase-16-profile-settings.md) | Profile & Settings | 4 screens | TODO |
+| 05 | ... | DONE ✅ |
+| 06 | ... | DONE ✅ |
+| 07 | ... | DONE ✅ |
+| 08 | ... | DONE ✅ |
+| 09 | ... | DONE ✅ |
+| 10 | ... | DONE ✅ |
+| 11 | ... | DONE ✅ |
+| 12 | ... | DONE ✅ |
+| 13 | ... | DONE ✅ |
+| 14 | ... | DONE ✅ |
+| 15 | ... | DONE ✅ |
+| 16 | ... | DONE ✅ |
 | 17 | [phase-17-testing.md](./phase-17-testing.md) | Testing (Unit + Integration + E2E) | — | TODO |
 | 18 | [phase-18-production-build.md](./phase-18-production-build.md) | Production Build — APK + IPA | — | TODO |
 

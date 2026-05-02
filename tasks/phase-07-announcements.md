@@ -1,6 +1,6 @@
 # Phase 07 — Announcements & Polls (FM/Admin Create)
 
-**Status:** TODO  
+**Status:** DONE  
 **Estimated Time:** 3–4 days  
 **Depends on:** Phase 03  
 
