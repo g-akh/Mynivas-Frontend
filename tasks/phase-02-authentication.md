@@ -1,6 +1,6 @@
 # Phase 02 — Authentication & Session Management
 
-**Status:** TODO  
+**Status:** DONE  
 **Estimated Time:** 3–4 days  
 **Depends on:** Phase 01 complete  
 **Blocks:** Phase 03 (navigation needs auth state)

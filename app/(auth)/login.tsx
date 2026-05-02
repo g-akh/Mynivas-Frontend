@@ -1,118 +1,201 @@
 /**
- * Login screen — Phase 02 will implement full OTP flow.
- * Phase 01: health check verification only.
+ * LoginScreen — Phase 02
+ * POST /v1/auth/request-otp
  */
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Image,
 } from "react-native";
-import { apiClient } from "../../src/api/client";
+import { router } from "expo-router";
+import { useMutation } from "@tanstack/react-query";
+import { SafeAreaView } from "react-native-safe-area-context";
+import PhoneInput from "../../src/components/forms/PhoneInput";
+import LoadingButton from "../../src/components/common/LoadingButton";
+import { requestOtp } from "../../src/api/auth";
+import { showToast } from "../../src/store/ui.store";
+import { getErrorMessage } from "../../src/api/client";
 import { theme } from "../../src/theme";
 
-export default function LoginScreen() {
-  const [apiStatus, setApiStatus] = useState<
-    "checking" | "ok" | "error"
-  >("checking");
-  const [apiMessage, setApiMessage] = useState("");
+const E164_REGEX = /^\+[1-9]\d{9,14}$/;
 
-  useEffect(() => {
-    // Phase 01: verify API gateway is reachable
-    apiClient
-      .get("/health")
-      .then((r) => {
-        setApiStatus("ok");
-        setApiMessage(
-          `✅ Backend connected: ${JSON.stringify(r.data)}`
-        );
-      })
-      .catch((err) => {
-        setApiStatus("error");
-        setApiMessage(`❌ ${err.message}`);
-      });
-  }, []);
+export default function LoginScreen() {
+  const [phone, setPhone] = useState("+91");
+  const [phoneError, setPhoneError] = useState("");
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: () => requestOtp(phone),
+    onSuccess: (data) => {
+      router.push({
+        pathname: "/(auth)/verify-otp",
+        params: { sessionId: data.sessionId, phone, expiresAt: data.expiresAt },
+      } as any);
+    },
+    onError: (err: any) => {
+      const status = err?.response?.status;
+      if (status === 429) {
+        showToast({ type: "warning", message: "Too many attempts. Try again in 60 seconds." });
+      } else {
+        showToast({ type: "error", message: getErrorMessage(err) });
+      }
+    },
+  });
+
+  const handleSendOTP = () => {
+    setPhoneError("");
+    if (!E164_REGEX.test(phone)) {
+      setPhoneError("Enter a valid 10-digit mobile number");
+      return;
+    }
+    mutate();
+  };
+
+  const isValid = E164_REGEX.test(phone);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.logoContainer}>
-        <Text style={styles.logoText}>MyNivas</Text>
-        <Text style={styles.tagline}>Society Management Platform</Text>
-      </View>
+    <SafeAreaView style={styles.safe}>
+      <KeyboardAvoidingView
+        style={styles.kav}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Hero */}
+          <View style={styles.hero}>
+            <View style={styles.logoCircle}>
+              <Text style={styles.logoLetter}>M</Text>
+            </View>
+            <Text style={styles.appName}>MyNivas</Text>
+            <Text style={styles.tagline}>Society Management Platform</Text>
+          </View>
 
-      <View style={styles.statusBox}>
-        <Text style={styles.statusLabel}>API Status</Text>
-        {apiStatus === "checking" ? (
-          <ActivityIndicator color={theme.colors.primary} />
-        ) : (
-          <Text
-            style={[
-              styles.statusText,
-              apiStatus === "ok" ? styles.ok : styles.err,
-            ]}
-          >
-            {apiMessage}
-          </Text>
-        )}
-      </View>
+          {/* Card */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Welcome Back</Text>
+            <Text style={styles.cardSubtitle}>
+              Enter your registered mobile number to continue
+            </Text>
 
-      <Text style={styles.hint}>
-        Phase 01 — Setup & Architecture{"\n"}
-        Full login UI implemented in Phase 02
-      </Text>
-    </View>
+            <View style={styles.fieldWrapper}>
+              <Text style={styles.label}>Mobile Number</Text>
+              <PhoneInput
+                value={phone}
+                onChangeText={(val) => {
+                  setPhone(val);
+                  setPhoneError("");
+                }}
+                error={phoneError}
+                disabled={isPending}
+                testID="phone-input"
+              />
+            </View>
+
+            <LoadingButton
+              title="Send OTP"
+              loadingTitle="Sending…"
+              onPress={handleSendOTP}
+              isLoading={isPending}
+              disabled={!isValid}
+              style={styles.btn}
+              testID="send-otp-btn"
+            />
+
+            <Text style={styles.terms}>
+              By continuing, you agree to our{" "}
+              <Text style={styles.termsLink}>Terms of Service</Text> and{" "}
+              <Text style={styles.termsLink}>Privacy Policy</Text>
+            </Text>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
+  safe: { flex: 1, backgroundColor: theme.colors.primary },
+  kav: { flex: 1 },
+  scroll: {
+    flexGrow: 1,
+    justifyContent: "flex-end",
+  },
+
+  // Hero section (navy background)
+  hero: {
+    alignItems: "center",
+    paddingTop: theme.spacing.xxxl,
+    paddingBottom: theme.spacing.xl,
+    paddingHorizontal: theme.spacing.xl,
+  },
+  logoCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "rgba(255,255,255,0.15)",
     justifyContent: "center",
     alignItems: "center",
-    padding: theme.spacing.xl,
+    marginBottom: theme.spacing.md,
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.3)",
   },
-  logoContainer: {
-    alignItems: "center",
-    marginBottom: theme.spacing.xxl,
-  },
-  logoText: {
-    fontSize: theme.fontSize.display,
+  logoLetter: {
+    fontSize: 36,
     fontWeight: theme.fontWeight.bold,
-    color: theme.colors.primary,
-    letterSpacing: 2,
+    color: "#FFFFFF",
+  },
+  appName: {
+    fontSize: theme.fontSize.xxxl,
+    fontWeight: theme.fontWeight.bold,
+    color: "#FFFFFF",
+    letterSpacing: 1,
   },
   tagline: {
     fontSize: theme.fontSize.sm,
-    color: theme.colors.textSecondary,
+    color: "rgba(255,255,255,0.75)",
     marginTop: theme.spacing.xs,
   },
-  statusBox: {
+
+  // White card at bottom
+  card: {
     backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    width: "100%",
-    alignItems: "center",
-    marginBottom: theme.spacing.xl,
-    ...theme.shadow.sm,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    padding: theme.spacing.xl,
+    paddingBottom: theme.spacing.xxxl,
+    ...theme.shadow.lg,
   },
-  statusLabel: {
+  cardTitle: {
+    fontSize: theme.fontSize.xxl,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.textPrimary,
+    marginBottom: theme.spacing.xs,
+  },
+  cardSubtitle: {
     fontSize: theme.fontSize.sm,
     color: theme.colors.textSecondary,
-    marginBottom: theme.spacing.sm,
-    fontWeight: theme.fontWeight.medium,
+    marginBottom: theme.spacing.xl,
+    lineHeight: 20,
   },
-  statusText: {
+  fieldWrapper: { marginBottom: theme.spacing.xl },
+  label: {
     fontSize: theme.fontSize.sm,
-    textAlign: "center",
+    fontWeight: theme.fontWeight.medium,
+    color: theme.colors.textPrimary,
+    marginBottom: theme.spacing.sm,
   },
-  ok: { color: theme.colors.success },
-  err: { color: theme.colors.danger },
-  hint: {
+  btn: { width: "100%", marginBottom: theme.spacing.lg },
+  terms: {
     fontSize: theme.fontSize.xs,
-    color: theme.colors.textDisabled,
+    color: theme.colors.textSecondary,
     textAlign: "center",
     lineHeight: 18,
   },
+  termsLink: { color: theme.colors.primary, fontWeight: theme.fontWeight.medium },
 });
