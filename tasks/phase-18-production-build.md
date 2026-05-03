@@ -1,6 +1,6 @@
 # Phase 18 — Production Build (Android APK/AAB + iOS IPA)
 
-**Status:** TODO  
+**Status:** DONE  
 **Estimated Time:** 2–3 days  
 **Depends on:** Phase 17 (all tests passing)  
 

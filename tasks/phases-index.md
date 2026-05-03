@@ -3,7 +3,7 @@
 **Platform:** React Native + Expo (Android + iOS)  
 **Backend Spec:** `docs/frontend-specification.md` in mynivas backend repo  
 **API Gateway:** `https://api.mynivas.com` (prod) / `http://localhost:3001` (dev)  
-**Last Updated:** 2026-05-02  
+**Last Updated:** 2026-05-03  
 
 ---
 
@@ -44,26 +44,26 @@ Phase 13 ──► Phase 14 ──► Phase 15 ──► Phase 16 ──► Phas
 
 | # | File | Title | Screens | Status |
 |---|---|---|---|---|
-| 01 | [phase-01-setup.md](./phase-01-setup.md) | Project Setup & Architecture | 0 screens, foundational | DONE ✅ |
-| 02 | [phase-02-authentication.md](./phase-02-authentication.md) | Authentication & Session | 4 screens | DONE ✅ |
-| 03 | [phase-03-navigation.md](./phase-03-navigation.md) | Navigation & Role Routing | Shell + Tab bars | DONE ✅ |
-| 04 | [phase-04-home-dashboard.md](./phase-04-home-dashboard.md) | Home Screen & FM Dashboard | 3 screens | DONE ✅ |
-| 05 | ... | DONE ✅ |
-| 06 | ... | DONE ✅ |
-| 07 | ... | DONE ✅ |
-| 08 | ... | DONE ✅ |
-| 09 | ... | DONE ✅ |
-| 10 | ... | DONE ✅ |
-| 11 | ... | DONE ✅ |
-| 12 | ... | DONE ✅ |
-| 13 | ... | DONE ✅ |
-| 14 | ... | DONE ✅ |
-| 15 | ... | DONE ✅ |
-| 16 | ... | DONE ✅ |
-| 17 | [phase-17-testing.md](./phase-17-testing.md) | Testing (Unit + Integration + E2E) | — | TODO |
-| 18 | [phase-18-production-build.md](./phase-18-production-build.md) | Production Build — APK + IPA | — | TODO |
+| 01 | [phase-01-setup.md](./phase-01-setup.md) | Project Setup & Architecture | 0 screens, foundational | ✅ DONE |
+| 02 | [phase-02-authentication.md](./phase-02-authentication.md) | Authentication & Session | Login + OTP Verify | ✅ DONE |
+| 03 | [phase-03-navigation.md](./phase-03-navigation.md) | Navigation & Role Routing | Root shell + role routing | ✅ DONE |
+| 04 | [phase-04-home-dashboard.md](./phase-04-home-dashboard.md) | Home Screen & FM Dashboard | Resident home + FM dashboard | ✅ DONE |
+| 05 | [phase-05-complaints.md](./phase-05-complaints.md) | Complaints / Helpdesk | Resident list/new + FM board | ✅ DONE |
+| 06 | [phase-06-visitors.md](./phase-06-visitors.md) | Visitor Management + Gate | Pre-register, passes (QR), gate dashboard, history | ✅ DONE |
+| 07 | [phase-07-announcements.md](./phase-07-announcements.md) | Announcements & Polls | Feed, detail, create wizard | ✅ DONE |
+| 08 | [phase-08-work-orders-ppm.md](./phase-08-work-orders-ppm.md) | Work Orders & PPM | FM list, technician tasks, PPM assets | ✅ DONE |
+| 09 | [phase-09-amenities.md](./phase-09-amenities.md) | Amenity Booking | Browse, calendar, book, approvals | ✅ DONE |
+| 10 | [phase-10-documents.md](./phase-10-documents.md) | Document Management | Library, search, download, upload | ✅ DONE |
+| 11 | [phase-11-reports.md](./phase-11-reports.md) | Reports & Analytics | 4-tab analytics + CSV export | ✅ DONE |
+| 12 | [phase-12-admin-panel.md](./phase-12-admin-panel.md) | Admin Panel | Tenants, communities, users, onboarding | ✅ DONE |
+| 13 | [phase-13-notifications.md](./phase-13-notifications.md) | Push Notifications | In-app notification center | ✅ DONE |
+| 14 | [phase-14-billing.md](./phase-14-billing.md) | Billing & Dues | Resident dues + FM collection dashboard | ✅ DONE |
+| 15 | [phase-15-plans.md](./phase-15-plans.md) | Plans & Feature Gating | Subscription info, plan features | ✅ DONE |
+| 16 | [phase-16-profile-settings.md](./phase-16-profile-settings.md) | Profile & Settings | Edit name, roles, settings, logout | ✅ DONE |
+| 17 | [phase-17-testing.md](./phase-17-testing.md) | Testing | Unit tests (store, utils, auth screens) | ✅ DONE |
+| 18 | [phase-18-production-build.md](./phase-18-production-build.md) | Production Build | EAS config, BUILD.md guide, eas.json | ✅ DONE |
 
-**Total screens: ~76 screens across all roles**
+**Total: 18 phases complete · ~80 screens · TypeScript strict zero errors**
 
 ---
 
