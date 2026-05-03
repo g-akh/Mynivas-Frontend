@@ -1,6 +1,6 @@
 # Phase 08 — Work Orders & PPM
 
-**Status:** TODO  
+**Status:** DONE  
 **Estimated Time:** 4–5 days  
 **Depends on:** Phase 03  
 

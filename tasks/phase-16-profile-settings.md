@@ -1,6 +1,6 @@
 # Phase 16 — Profile & Settings
 
-**Status:** TODO  
+**Status:** DONE  
 **Estimated Time:** 2–3 days  
 **Depends on:** Phase 02  
 

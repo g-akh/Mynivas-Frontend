@@ -1,6 +1,6 @@
 # Phase 01 — Project Setup & Architecture
 
-**Status:** TODO  
+**Status:** DONE  
 **Estimated Time:** 2–3 days  
 **Blocks:** All subsequent phases  
 **No backend dependency** — this is pure project scaffolding.
@@ -17,12 +17,12 @@
 - Connect to backend API gateway with a working health check
 
 ### Success Criteria
-- [ ] `npx expo start` runs without errors
-- [ ] App opens on Android emulator AND iOS simulator
-- [ ] `GET /health` from backend returns `{ status: "ok" }` in the app
-- [ ] Folder structure matches `phases-index.md` target
-- [ ] EAS build profile configured for `development`, `preview`, `production`
-- [ ] TypeScript strict mode with zero type errors
+- [x] `npx expo start` runs without errors
+- [x] App opens on Android emulator AND iOS simulator
+- [x] `GET /health` from backend returns `{ status: "ok" }` in the app (login.tsx health check)
+- [x] Folder structure matches `phases-index.md` target
+- [x] EAS build profile configured for `development`, `preview`, `production`
+- [x] TypeScript strict mode with zero type errors
 
 ---
 

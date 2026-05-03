@@ -1,6 +1,6 @@
 # Phase 06 — Visitor Management & Gate
 
-**Status:** TODO  
+**Status:** DONE  
 **Estimated Time:** 5–6 days  
 **Depends on:** Phase 03  
 

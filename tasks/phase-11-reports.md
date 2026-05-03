@@ -1,6 +1,6 @@
 # Phase 11 — Reports & Analytics (FM/Admin)
 
-**Status:** TODO  
+**Status:** DONE  
 **Estimated Time:** 5–6 days  
 **Depends on:** Phase 04  
 **Roles:** FM, COMMUNITY_ADMIN only

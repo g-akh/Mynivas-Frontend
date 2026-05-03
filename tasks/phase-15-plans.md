@@ -1,6 +1,6 @@
 # Phase 15 — Plans, Subscriptions & Feature Gating
 
-**Status:** TODO  
+**Status:** DONE  
 **Estimated Time:** 3–4 days  
 **Depends on:** Phase 12  
 **Roles:** SUPER_ADMIN only (subscription management)
