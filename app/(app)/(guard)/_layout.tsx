@@ -9,10 +9,9 @@ import { Redirect } from "expo-router";
 import { theme } from "../../../src/theme";
 
 export default function GuardLayout() {
-  const { isAuthenticated, isGuard } = useAuthStore();
+  const { isGuard } = useAuthStore();
 
-  if (!isAuthenticated) return <Redirect href="/(auth)/login" />;
-  if (!isGuard()) return <Redirect href="/(app)" />;
+  if (!isGuard()) return <Redirect href="/(auth)/login" />;
 
   return (
     <Tabs

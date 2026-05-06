@@ -11,6 +11,7 @@ export interface AuthUser {
 
 export type UserRole =
   | "SUPER_ADMIN"
+  | "SUPERADMIN"
   | "TENANT_ADMIN"
   | "COMMUNITY_ADMIN"
   | "FM"

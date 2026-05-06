@@ -97,13 +97,13 @@ export default function AdminUsersScreen() {
   });
 
   const { mutate: inviteUser, isPending: isInviting } = useMutation({
-    mutationFn: () =>
+    mutationFn: (vars: { phone: string; name: string; selectedRole: UserRole }) =>
       createUser({
         tenantId: user?.tenantId ?? "",
         communityId: user?.communityId ?? "",
-        phone: phone.trim(),
-        name: name.trim() || undefined,
-        roles: [selectedRole],
+        phone: vars.phone,
+        name: vars.name || undefined,
+        roles: [vars.selectedRole],
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["users"] });
@@ -117,11 +117,21 @@ export default function AdminUsersScreen() {
   });
 
   const handleInvite = () => {
-    if (!phone.trim()) {
+    let finalPhone = phone.trim();
+    if (!finalPhone) {
       showToast({ type: "error", message: "Phone number is required" });
       return;
     }
-    inviteUser();
+    
+    // Auto-prepend +91 if user just typed 10 digits
+    if (/^\d{10}$/.test(finalPhone)) {
+      finalPhone = "+91" + finalPhone;
+    } else if (!/^\+[1-9]\d{9,14}$/.test(finalPhone)) {
+      showToast({ type: "error", message: "Enter a valid mobile number with country code (e.g. +919876543210)" });
+      return;
+    }
+
+    inviteUser({ phone: finalPhone, name: name.trim(), selectedRole });
   };
 
   return (

@@ -1,16 +1,21 @@
 import { Stack } from "expo-router";
 import { Redirect } from "expo-router";
 import { useAuthStore } from "../../src/store/auth.store";
-import { routeByRole } from "../../src/utils/routing";
+import { getHomeRoute } from "../../src/utils/routing";
 import { theme } from "../../src/theme";
 
 export default function AuthLayout() {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, logout } = useAuthStore();
 
   // Already logged in — redirect to role-appropriate home
   if (isAuthenticated && user) {
-    routeByRole(user.roles);
-    return null;
+    const homeRoute = getHomeRoute(user.roles);
+    if (homeRoute === "/(auth)/login") {
+      // User has no valid roles, clear session to break loop
+      logout();
+    } else {
+      return <Redirect href={homeRoute as any} />;
+    }
   }
 
   return (

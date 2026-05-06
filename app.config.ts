@@ -29,6 +29,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       backgroundColor: "#1B4F72",
     },
     package: "com.mynivas.app",
+    usesCleartextTraffic: true,
     permissions: [
       "android.permission.CAMERA",
       "android.permission.READ_EXTERNAL_STORAGE",
@@ -44,6 +45,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     favicon: "./assets/favicon.png",
   },
   plugins: [
+    "expo-font",
     "expo-router",
     [
       "expo-notifications",
@@ -70,7 +72,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   extra: {
     apiUrl: process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3001",
     eas: {
-      projectId: "YOUR_EAS_PROJECT_ID",
+      projectId: "1b497d07-d4f1-4a3f-aecb-de8956632117",
     },
   },
 });

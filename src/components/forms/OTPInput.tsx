@@ -36,27 +36,50 @@ const OTPInput = forwardRef<OTPInputRef, OTPInputProps>(
     }));
 
     const handleChange = (text: string, index: number) => {
-      // Handle paste: user pastes "123456" into first box
-      if (text.length > 1) {
-        const digits = text.replace(/\D/g, "").slice(0, length);
+      const cleaned = text.replace(/\D/g, "");
+
+      if (cleaned.length === 0) {
+        const next = [...values];
+        next[index] = "";
+        setValues(next);
+        return;
+      }
+
+      // Handle paste (full OTP pasted at once)
+      if (cleaned.length >= length) {
+        const digits = cleaned.slice(0, length);
         const next = Array(length).fill("");
         for (let i = 0; i < digits.length; i++) next[i] = digits[i];
         setValues(next);
-        if (digits.length === length) {
-          onComplete(digits);
+        onComplete(digits);
+        inputs.current[length - 1]?.blur();
+        return;
+      }
+
+      // Multi-digit but less than full length (partial paste)
+      if (cleaned.length > 1) {
+        const next = [...values];
+        for (let i = 0; i < cleaned.length && index + i < length; i++) {
+          next[index + i] = cleaned[i];
+        }
+        setValues(next);
+        const nextIndex = Math.min(index + cleaned.length, length - 1);
+        inputs.current[nextIndex]?.focus();
+        const joined = next.join("");
+        if (joined.length === length && !next.includes("")) {
+          onComplete(joined);
           inputs.current[length - 1]?.blur();
-        } else {
-          inputs.current[digits.length]?.focus();
         }
         return;
       }
 
-      const digit = text.replace(/\D/g, "").slice(-1);
+      // Single digit entry
+      const digit = cleaned[0];
       const next = [...values];
       next[index] = digit;
       setValues(next);
 
-      if (digit && index < length - 1) {
+      if (index < length - 1) {
         inputs.current[index + 1]?.focus();
       }
 
@@ -97,7 +120,7 @@ const OTPInput = forwardRef<OTPInputRef, OTPInputProps>(
               onChangeText={(t) => handleChange(t, i)}
               onKeyPress={(e) => handleKeyPress(e, i)}
               keyboardType="number-pad"
-              maxLength={Platform.OS === "android" ? 6 : 1} // Android: allow paste
+              maxLength={Platform.OS === "android" ? 1 : 6}
               selectTextOnFocus
               editable={!disabled}
               textContentType="oneTimeCode"

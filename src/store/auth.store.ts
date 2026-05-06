@@ -77,6 +77,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isAdmin: () =>
     get().hasAnyRole([
       "SUPER_ADMIN",
+      "SUPERADMIN",
       "TENANT_ADMIN",
       "COMMUNITY_ADMIN",
     ]),
@@ -85,5 +86,5 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isGuard: () => get().hasRole("GUARD"),
   isTechnician: () => get().hasRole("TECHNICIAN"),
   isSuperAdmin: () =>
-    get().hasAnyRole(["SUPER_ADMIN", "TENANT_ADMIN"]),
+    get().hasAnyRole(["SUPER_ADMIN", "SUPERADMIN", "TENANT_ADMIN"]),
 }));

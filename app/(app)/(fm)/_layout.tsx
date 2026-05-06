@@ -9,10 +9,9 @@ import { Redirect } from "expo-router";
 import { theme } from "../../../src/theme";
 
 export default function FMLayout() {
-  const { isAuthenticated, isFM } = useAuthStore();
+  const { isFM } = useAuthStore();
 
-  if (!isAuthenticated) return <Redirect href="/(auth)/login" />;
-  if (!isFM()) return <Redirect href="/(app)" />;
+  if (!isFM()) return <Redirect href="/(auth)/login" />;
 
   return (
     <Tabs

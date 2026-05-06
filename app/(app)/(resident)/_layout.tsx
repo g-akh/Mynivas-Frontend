@@ -9,10 +9,12 @@ import { Redirect } from "expo-router";
 import { theme } from "../../../src/theme";
 
 export default function ResidentLayout() {
-  const { isAuthenticated, isResident } = useAuthStore();
+  const { isResident } = useAuthStore();
 
-  if (!isAuthenticated) return <Redirect href="/(auth)/login" />;
-  if (!isResident()) return <Redirect href="/(app)" />;
+  // AppLayout above us already guards isAuthenticated.
+  // If user is not a resident (wrong role), send them back to login
+  // so the root index can re-route them to their correct home.
+  if (!isResident()) return <Redirect href="/(auth)/login" />;
 
   return (
     <Tabs

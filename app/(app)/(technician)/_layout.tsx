@@ -9,10 +9,9 @@ import { Redirect } from "expo-router";
 import { theme } from "../../../src/theme";
 
 export default function TechnicianLayout() {
-  const { isAuthenticated, isTechnician } = useAuthStore();
+  const { isTechnician } = useAuthStore();
 
-  if (!isAuthenticated) return <Redirect href="/(auth)/login" />;
-  if (!isTechnician()) return <Redirect href="/(app)" />;
+  if (!isTechnician()) return <Redirect href="/(auth)/login" />;
 
   return (
     <Tabs

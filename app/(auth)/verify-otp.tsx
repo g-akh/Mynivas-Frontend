@@ -29,10 +29,11 @@ import { theme } from "../../src/theme";
 const RESEND_SECONDS = 30;
 
 export default function VerifyOTPScreen() {
-  const { sessionId, phone, expiresAt } = useLocalSearchParams<{
+  const { sessionId, phone, expiresAt, devOtp } = useLocalSearchParams<{
     sessionId: string;
     phone: string;
     expiresAt: string;
+    devOtp?: string;
   }>();
 
   const otpRef = useRef<OTPInputRef>(null);
@@ -52,7 +53,7 @@ export default function VerifyOTPScreen() {
 
   // ── Verify OTP mutation ─────────────────────────────────────────────────
   const verifyMutation = useMutation({
-    mutationFn: () => verifyOtp(currentSessionId, otp),
+    mutationFn: (otpOverride?: string) => verifyOtp(currentSessionId, otpOverride ?? otp),
     onSuccess: async (data) => {
       await setSession(data.user, data.accessToken, data.refreshToken);
       await registerPushNotifications(data.user.id);
@@ -85,11 +86,20 @@ export default function VerifyOTPScreen() {
     onError: (err) => showToast({ type: "error", message: getErrorMessage(err) }),
   });
 
+  // ── DEV: auto-submit OTP when DEV_OTP_ECHO provides it ───────────────
+  useEffect(() => {
+    if (devOtp && devOtp.length === 6) {
+      setOtp(devOtp);
+      setTimeout(() => verifyMutation.mutate(devOtp), 300);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [devOtp]);
+
   const handleOTPComplete = (code: string) => {
     setOtp(code);
     setOtpError(false);
-    // Auto-submit
-    setTimeout(() => verifyMutation.mutate(), 150);
+    // Auto-submit with code directly (state may not be updated yet)
+    verifyMutation.mutate(code);
   };
 
   const isLoading = verifyMutation.isPending || resendMutation.isPending;

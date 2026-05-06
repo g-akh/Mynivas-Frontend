@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import * as SplashScreen from "expo-splash-screen";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PaperProvider, MD3LightTheme } from "react-native-paper";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -9,6 +10,8 @@ import { useAuthStore } from "../src/store/auth.store";
 import { setupNotificationHandlers } from "../src/utils/push";
 import { theme } from "../src/theme";
 import Toast from "../src/components/common/Toast";
+
+// SplashScreen.preventAutoHideAsync(); // Removed to fix splash screen hang
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,18 +35,23 @@ const paperTheme = {
 };
 
 export default function RootLayout() {
-  const { loadSession, isLoading } = useAuthStore();
+  const { loadSession } = useAuthStore();
 
   useEffect(() => {
-    loadSession();
-    const cleanup = setupNotificationHandlers();
-    return cleanup;
+    loadSession().catch((err) => {
+      console.warn("[RootLayout] loadSession failed:", err);
+    });
+
+    let cleanup: (() => void) | undefined;
+    try {
+      cleanup = setupNotificationHandlers();
+    } catch (err) {
+      console.warn("[RootLayout] setupNotificationHandlers failed:", err);
+    }
+    return () => cleanup?.();
   }, []);
 
-  if (isLoading) {
-    // Splash screen stays up while session loads (handled by expo-splash-screen)
-    return null;
-  }
+  // Removed onLayoutRootView to always render the app shell
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

@@ -33,7 +33,7 @@ export default function LoginScreen() {
     onSuccess: (data) => {
       router.push({
         pathname: "/(auth)/verify-otp",
-        params: { sessionId: data.sessionId, phone, expiresAt: data.expiresAt },
+        params: { sessionId: data.sessionId, phone, expiresAt: data.expiresAt, devOtp: data.otp ?? "" },
       } as any);
     },
     onError: (err: any) => {

@@ -9,10 +9,9 @@ import { Redirect } from "expo-router";
 import { theme } from "../../../src/theme";
 
 export default function AdminLayout() {
-  const { isAuthenticated, isSuperAdmin } = useAuthStore();
+  const { isSuperAdmin } = useAuthStore();
 
-  if (!isAuthenticated) return <Redirect href="/(auth)/login" />;
-  if (!isSuperAdmin()) return <Redirect href="/(app)" />;
+  if (!isSuperAdmin()) return <Redirect href="/(auth)/login" />;
 
   return (
     <Tabs
