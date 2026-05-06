@@ -24,21 +24,33 @@ export async function createVisitor(input: {
   visitorType: VisitorType;
 }): Promise<Visitor> {
   const { data } = await apiClient.post("/v1/visitors", {
-    tenant_id: input.tenantId,
-    community_id: input.communityId,
-    unit_id: input.unitId,
-    visitor_name: input.visitorName,
-    visitor_phone: input.visitorPhone,
-    visitor_type: input.visitorType,
+    tenantId: input.tenantId,
+    communityId: input.communityId,
+    unitId: input.unitId,
+    visitorName: input.visitorName,
+    visitorPhone: input.visitorPhone,
+    visitorType: input.visitorType,
   });
   return data;
 }
 
-export async function updateVisitorStatus(
-  id: string,
-  status: VisitorStatus
-): Promise<Visitor> {
-  const { data } = await apiClient.patch(`/v1/visitors/${id}`, { status });
+export async function approveVisitor(id: string, note?: string): Promise<Visitor> {
+  const { data } = await apiClient.post(`/v1/visitors/${id}/approve`, { note });
+  return data;
+}
+
+export async function rejectVisitor(id: string, reason: string): Promise<Visitor> {
+  const { data } = await apiClient.post(`/v1/visitors/${id}/reject`, { reason });
+  return data;
+}
+
+export async function checkinVisitor(id: string, note?: string): Promise<Visitor> {
+  const { data } = await apiClient.post(`/v1/visitors/${id}/checkin`, { note });
+  return data;
+}
+
+export async function checkoutVisitor(id: string, note?: string): Promise<Visitor> {
+  const { data } = await apiClient.post(`/v1/visitors/${id}/checkout`, { note });
   return data;
 }
 
@@ -57,13 +69,14 @@ export async function createVisitorPass(input: {
   expiresAt: string;
 }): Promise<VisitorPass> {
   const { data } = await apiClient.post("/v1/visitor-passes", {
-    tenant_id: input.tenantId,
-    unit_id: input.unitId,
-    resident_id: input.residentId,
-    visitor_name: input.visitorName,
-    expected_at: input.expectedAt,
-    expires_at: input.expiresAt,
-    created_via: "ADMIN",
+    tenantId: input.tenantId,
+    unitId: input.unitId,
+    residentId: input.residentId,
+    visitorName: input.visitorName,
+    expectedAt: input.expectedAt,
+    expiresAt: input.expiresAt,
+    status: "ACTIVE",
+    createdVia: "MOBILE",
   });
   return data;
 }
@@ -84,10 +97,10 @@ export async function blockVisitor(input: {
   reason?: string;
 }): Promise<void> {
   await apiClient.post("/v1/blocked-visitors", {
-    tenant_id: input.tenantId,
-    community_id: input.communityId,
-    visitor_name: input.visitorName,
-    visitor_phone: input.visitorPhone,
+    tenantId: input.tenantId,
+    communityId: input.communityId,
+    visitorName: input.visitorName,
+    visitorPhone: input.visitorPhone,
     reason: input.reason,
   });
 }

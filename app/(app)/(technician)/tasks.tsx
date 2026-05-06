@@ -18,7 +18,7 @@ import AppHeader from "../../../src/components/common/AppHeader";
 import StatusBadge from "../../../src/components/common/StatusBadge";
 import EmptyState from "../../../src/components/common/EmptyState";
 import { SkeletonList } from "../../../src/components/common/SkeletonLoader";
-import { useWorkOrderList, useUpdateWorkOrder } from "../../../src/hooks/useWorkOrders";
+import { useWorkOrderList, useStartWorkOrder, useCompleteWorkOrder, useBlockWorkOrder } from "../../../src/hooks/useWorkOrders";
 import { showToast } from "../../../src/store/ui.store";
 import { theme } from "../../../src/theme";
 import { formatRelative } from "../../../src/utils/format";
@@ -45,15 +45,38 @@ const PRIORITY_COLOR: Record<string, string> = {
 };
 
 function TaskCard({ item }: { item: WorkOrder }) {
-  const { mutate: updateWO, isPending } = useUpdateWorkOrder();
+  const { mutate: start, isPending: starting } = useStartWorkOrder();
+  const { mutate: complete, isPending: completing } = useCompleteWorkOrder();
+  const { mutate: block, isPending: blocking } = useBlockWorkOrder();
+  const isPending = starting || completing || blocking;
   const typeColor = TYPE_COLOR[item.type] ?? theme.colors.primary;
   const priorityColor = PRIORITY_COLOR[item.priority] ?? theme.colors.textSecondary;
 
-  const handleUpdate = (status: WorkOrderStatus) => {
-    updateWO(
-      { id: item.id, patch: { status } },
+  const handleStart = () => {
+    start(
+      { id: item.id },
       {
-        onSuccess: () => showToast({ type: "success", message: `Marked as ${status.replace("_", " ")}` }),
+        onSuccess: () => showToast({ type: "success", message: "Marked as IN PROGRESS" }),
+        onError: () => showToast({ type: "error", message: "Failed to update" }),
+      }
+    );
+  };
+
+  const handleComplete = () => {
+    complete(
+      { id: item.id },
+      {
+        onSuccess: () => showToast({ type: "success", message: "Marked as COMPLETED" }),
+        onError: () => showToast({ type: "error", message: "Failed to update" }),
+      }
+    );
+  };
+
+  const handleBlock = () => {
+    block(
+      { id: item.id, reason: "Blocked by technician" },
+      {
+        onSuccess: () => showToast({ type: "success", message: "Marked as BLOCKED" }),
         onError: () => showToast({ type: "error", message: "Failed to update" }),
       }
     );
@@ -90,7 +113,7 @@ function TaskCard({ item }: { item: WorkOrder }) {
         {item.status === "OPEN" || item.status === "ASSIGNED" ? (
           <TouchableOpacity
             style={[s.actionBtn, s.inProgressBtn]}
-            onPress={() => handleUpdate("IN_PROGRESS")}
+            onPress={handleStart}
             disabled={isPending}
           >
             <MaterialIcons name="play-arrow" size={15} color={theme.colors.primary} />
@@ -102,7 +125,7 @@ function TaskCard({ item }: { item: WorkOrder }) {
           <>
             <TouchableOpacity
               style={[s.actionBtn, s.blockedBtn]}
-              onPress={() => handleUpdate("BLOCKED")}
+              onPress={handleBlock}
               disabled={isPending}
             >
               <MaterialIcons name="block" size={15} color={theme.colors.warning} />
@@ -110,7 +133,7 @@ function TaskCard({ item }: { item: WorkOrder }) {
             </TouchableOpacity>
             <TouchableOpacity
               style={[s.actionBtn, s.completedBtn]}
-              onPress={() => handleUpdate("COMPLETED")}
+              onPress={handleComplete}
               disabled={isPending}
             >
               <MaterialIcons name="check-circle" size={15} color="#FFFFFF" />
@@ -122,7 +145,7 @@ function TaskCard({ item }: { item: WorkOrder }) {
         {item.status === "BLOCKED" ? (
           <TouchableOpacity
             style={[s.actionBtn, s.inProgressBtn]}
-            onPress={() => handleUpdate("IN_PROGRESS")}
+            onPress={handleStart}
             disabled={isPending}
           >
             <MaterialIcons name="play-arrow" size={15} color={theme.colors.primary} />

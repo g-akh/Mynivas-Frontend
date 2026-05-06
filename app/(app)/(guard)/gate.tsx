@@ -20,7 +20,7 @@ import AppHeader from "../../../src/components/common/AppHeader";
 import StatusBadge from "../../../src/components/common/StatusBadge";
 import EmptyState from "../../../src/components/common/EmptyState";
 import { SkeletonList } from "../../../src/components/common/SkeletonLoader";
-import { useVisitorList, useUpdateVisitorStatus } from "../../../src/hooks/useVisitors";
+import { useVisitorList, useApproveVisitor, useRejectVisitor, useCheckoutVisitor } from "../../../src/hooks/useVisitors";
 import { showToast } from "../../../src/store/ui.store";
 import { theme } from "../../../src/theme";
 import { formatRelative } from "../../../src/utils/format";
@@ -40,26 +40,29 @@ function VisitorGateCard({
   item: Visitor;
   section: "pending" | "checked_in";
 }) {
-  const { mutate: updateStatus, isPending } = useUpdateVisitorStatus();
+  const { mutate: approve, isPending: approving } = useApproveVisitor();
+  const { mutate: reject, isPending: rejecting } = useRejectVisitor();
+  const { mutate: checkout, isPending: checkingOut } = useCheckoutVisitor();
+  const isPending = approving || rejecting || checkingOut;
   const typeColor = VISITOR_TYPE_COLOR[item.visitor_type] ?? theme.colors.primary;
 
   const handleApprove = () => {
-    updateStatus(
-      { id: item.id, status: "APPROVED" },
+    approve(
+      { id: item.id },
       { onSuccess: () => showToast({ type: "success", message: "Visitor approved" }) }
     );
   };
 
   const handleReject = () => {
-    updateStatus(
-      { id: item.id, status: "REJECTED" },
+    reject(
+      { id: item.id, reason: "Rejected by guard" },
       { onSuccess: () => showToast({ type: "success", message: "Visitor rejected" }) }
     );
   };
 
   const handleCheckOut = () => {
-    updateStatus(
-      { id: item.id, status: "CHECKED_OUT" },
+    checkout(
+      { id: item.id },
       { onSuccess: () => showToast({ type: "success", message: "Visitor checked out" }) }
     );
   };

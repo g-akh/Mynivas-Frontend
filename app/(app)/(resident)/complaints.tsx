@@ -51,7 +51,7 @@ function NewComplaintModal({ visible, onClose }: { visible: boolean; onClose: ()
   const submit = () => {
     if (!user) return;
     mutate(
-      { communityId: user.communityId, unitId: user.id, tenantId: user.tenantId, category, priority, description },
+      { communityId: user.communityId, unitId: user.unitId ?? user.communityId, tenantId: user.tenantId, category, priority, description },
       {
         onSuccess: () => {
           showToast({ type: "success", message: "Complaint submitted!" });

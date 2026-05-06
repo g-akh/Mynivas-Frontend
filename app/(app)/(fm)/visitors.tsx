@@ -17,7 +17,7 @@ import AppHeader from "../../../src/components/common/AppHeader";
 import StatusBadge from "../../../src/components/common/StatusBadge";
 import EmptyState from "../../../src/components/common/EmptyState";
 import { SkeletonList } from "../../../src/components/common/SkeletonLoader";
-import { useVisitorList, useUpdateVisitorStatus } from "../../../src/hooks/useVisitors";
+import { useVisitorList, useApproveVisitor, useRejectVisitor } from "../../../src/hooks/useVisitors";
 import { showToast } from "../../../src/store/ui.store";
 import { theme } from "../../../src/theme";
 import { formatRelative, formatDateTime } from "../../../src/utils/format";
@@ -39,19 +39,21 @@ function VisitorCard({
   item: Visitor;
   showActions: boolean;
 }) {
-  const { mutate: updateStatus, isPending } = useUpdateVisitorStatus();
+  const { mutate: approve, isPending: approving } = useApproveVisitor();
+  const { mutate: reject, isPending: rejecting } = useRejectVisitor();
+  const isPending = approving || rejecting;
   const typeColor = VISITOR_TYPE_COLOR[item.visitor_type] ?? theme.colors.primary;
 
   const handleApprove = () => {
-    updateStatus(
-      { id: item.id, status: "APPROVED" },
+    approve(
+      { id: item.id },
       { onSuccess: () => showToast({ type: "success", message: "Visitor approved" }) }
     );
   };
 
   const handleReject = () => {
-    updateStatus(
-      { id: item.id, status: "REJECTED" },
+    reject(
+      { id: item.id, reason: "Rejected by FM" },
       { onSuccess: () => showToast({ type: "success", message: "Visitor rejected" }) }
     );
   };

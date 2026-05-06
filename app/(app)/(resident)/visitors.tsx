@@ -2,7 +2,7 @@
  * Resident Visitors — Phase 09
  * Pre-register visitors + show QR passes
  */
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import {
   ScrollView,
   Platform,
 } from "react-native";
+import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
 import QRCode from "react-native-qrcode-svg";
@@ -75,13 +76,61 @@ function PassCard({ item }: { item: VisitorPass }) {
   );
 }
 
+function formatDateForDisplay(date: Date | null): string {
+  if (!date) return "";
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  const h = String(date.getHours()).padStart(2, "0");
+  const min = String(date.getMinutes()).padStart(2, "0");
+  return `${y}-${m}-${d} ${h}:${min}`;
+}
+
+type PickerField = "expectedAt" | "expiresAt";
+type PickerMode = "date" | "time";
+
 function RegisterForm() {
   const { user } = useAuthStore();
   const { mutate: createPass, isPending } = useCreateVisitorPass();
 
   const [visitorName, setVisitorName] = useState("");
-  const [expectedAt, setExpectedAt] = useState("");
-  const [expiresAt, setExpiresAt] = useState("");
+  const [expectedAt, setExpectedAt] = useState<Date | null>(null);
+  const [expiresAt, setExpiresAt] = useState<Date | null>(null);
+
+  const [pickerField, setPickerField] = useState<PickerField | null>(null);
+  const [pickerMode, setPickerMode] = useState<PickerMode>("date");
+  const [tempDate, setTempDate] = useState(new Date());
+
+  const openPicker = useCallback((field: PickerField) => {
+    const current = field === "expectedAt" ? expectedAt : expiresAt;
+    setTempDate(current ?? new Date());
+    setPickerField(field);
+    setPickerMode("date");
+  }, [expectedAt, expiresAt]);
+
+  const onPickerChange = useCallback((_event: DateTimePickerEvent, selectedDate?: Date) => {
+    if (_event.type === "dismissed") {
+      setPickerField(null);
+      return;
+    }
+    if (!selectedDate || !pickerField) return;
+
+    if (pickerMode === "date") {
+      setTempDate(selectedDate);
+      if (Platform.OS === "android") {
+        setPickerMode("time");
+      } else {
+        const setter = pickerField === "expectedAt" ? setExpectedAt : setExpiresAt;
+        setter(selectedDate);
+      }
+    } else {
+      const combined = new Date(tempDate);
+      combined.setHours(selectedDate.getHours(), selectedDate.getMinutes());
+      const setter = pickerField === "expectedAt" ? setExpectedAt : setExpiresAt;
+      setter(combined);
+      setPickerField(null);
+    }
+  }, [pickerField, pickerMode, tempDate]);
 
   const handleSubmit = () => {
     if (!visitorName.trim()) {
@@ -101,18 +150,18 @@ function RegisterForm() {
     createPass(
       {
         tenantId: user.tenantId,
-        unitId: user.communityId,
+        unitId: user.unitId ?? user.communityId,
         residentId: user.id,
         visitorName: visitorName.trim(),
-        expectedAt: new Date(expectedAt).toISOString(),
-        expiresAt: new Date(expiresAt).toISOString(),
+        expectedAt: expectedAt.toISOString(),
+        expiresAt: expiresAt.toISOString(),
       },
       {
         onSuccess: () => {
           showToast({ type: "success", message: "Visitor pass created!" });
           setVisitorName("");
-          setExpectedAt("");
-          setExpiresAt("");
+          setExpectedAt(null);
+          setExpiresAt(null);
         },
         onError: () => showToast({ type: "error", message: "Failed to create visitor pass" }),
       }
@@ -137,26 +186,18 @@ function RegisterForm() {
         />
 
         <Text style={s.fieldLabel}>Expected Arrival *</Text>
-        <TextInput
-          style={s.input}
-          value={expectedAt}
-          onChangeText={setExpectedAt}
-          placeholder={Platform.OS === "ios" ? "YYYY-MM-DD HH:MM" : "2024-12-31 14:00"}
-          placeholderTextColor={theme.colors.textDisabled}
-          keyboardType="default"
-        />
-        <Text style={s.fieldHint}>Format: YYYY-MM-DD HH:MM (24h)</Text>
+        <TouchableOpacity style={s.input} onPress={() => openPicker("expectedAt")}>
+          <Text style={{ color: expectedAt ? theme.colors.textPrimary : theme.colors.textDisabled, lineHeight: 46 }}>
+            {expectedAt ? formatDateForDisplay(expectedAt) : "Tap to select date & time"}
+          </Text>
+        </TouchableOpacity>
 
         <Text style={s.fieldLabel}>Pass Expires At *</Text>
-        <TextInput
-          style={s.input}
-          value={expiresAt}
-          onChangeText={setExpiresAt}
-          placeholder={Platform.OS === "ios" ? "YYYY-MM-DD HH:MM" : "2024-12-31 23:59"}
-          placeholderTextColor={theme.colors.textDisabled}
-          keyboardType="default"
-        />
-        <Text style={s.fieldHint}>Format: YYYY-MM-DD HH:MM (24h)</Text>
+        <TouchableOpacity style={s.input} onPress={() => openPicker("expiresAt")}>
+          <Text style={{ color: expiresAt ? theme.colors.textPrimary : theme.colors.textDisabled, lineHeight: 46 }}>
+            {expiresAt ? formatDateForDisplay(expiresAt) : "Tap to select date & time"}
+          </Text>
+        </TouchableOpacity>
 
         <LoadingButton
           title="Create Visitor Pass"
@@ -166,6 +207,44 @@ function RegisterForm() {
           style={{ marginTop: theme.spacing.lg }}
         />
       </View>
+
+      {pickerField != null && (
+        Platform.OS === "ios" ? (
+          <Modal transparent animationType="fade">
+            <TouchableOpacity style={s.modalOverlay} activeOpacity={1} onPress={() => setPickerField(null)}>
+              <View style={s.pickerModal}>
+                <DateTimePicker
+                  value={tempDate}
+                  mode="datetime"
+                  display="spinner"
+                  minimumDate={new Date()}
+                  onChange={(_e, d) => {
+                    if (d) setTempDate(d);
+                  }}
+                />
+                <TouchableOpacity
+                  style={s.closeBtn}
+                  onPress={() => {
+                    const setter = pickerField === "expectedAt" ? setExpectedAt : setExpiresAt;
+                    setter(tempDate);
+                    setPickerField(null);
+                  }}
+                >
+                  <Text style={s.closeBtnText}>Confirm</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </Modal>
+        ) : (
+          <DateTimePicker
+            value={tempDate}
+            mode={pickerMode}
+            display="default"
+            minimumDate={new Date()}
+            onChange={onPickerChange}
+          />
+        )
+      )}
     </ScrollView>
   );
 }
@@ -299,6 +378,14 @@ const s = StyleSheet.create({
   },
   qrModalTitle: { fontSize: theme.fontSize.lg, fontWeight: theme.fontWeight.bold, color: theme.colors.textPrimary, marginBottom: 4 },
   qrModalSubtitle: { fontSize: theme.fontSize.sm, color: theme.colors.textSecondary, marginBottom: theme.spacing.lg },
+  pickerModal: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.xl,
+    padding: theme.spacing.lg,
+    width: "85%",
+    alignItems: "center",
+    ...theme.shadow.lg,
+  },
   qrContainer: { padding: 16, backgroundColor: "#FFFFFF", borderRadius: 12, borderWidth: 1, borderColor: theme.colors.border },
   qrExpiry: { fontSize: theme.fontSize.xs, color: theme.colors.textSecondary, marginTop: theme.spacing.md, marginBottom: theme.spacing.md },
   closeBtn: {

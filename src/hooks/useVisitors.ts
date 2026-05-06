@@ -1,7 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   listVisitors,
-  updateVisitorStatus,
+  approveVisitor,
+  rejectVisitor,
+  checkinVisitor,
+  checkoutVisitor,
   listVisitorPasses,
   createVisitorPass,
 } from "../api/visitors";
@@ -23,14 +26,39 @@ export function useVisitorPassList() {
   });
 }
 
-export function useUpdateVisitorStatus() {
+export function useApproveVisitor() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, status }: { id: string; status: VisitorStatus }) =>
-      updateVisitorStatus(id, status),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["visitors"] });
-    },
+    mutationFn: ({ id, note }: { id: string; note?: string }) =>
+      approveVisitor(id, note),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["visitors"] }),
+  });
+}
+
+export function useRejectVisitor() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
+      rejectVisitor(id, reason),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["visitors"] }),
+  });
+}
+
+export function useCheckinVisitor() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, note }: { id: string; note?: string }) =>
+      checkinVisitor(id, note),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["visitors"] }),
+  });
+}
+
+export function useCheckoutVisitor() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, note }: { id: string; note?: string }) =>
+      checkoutVisitor(id, note),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["visitors"] }),
   });
 }
 

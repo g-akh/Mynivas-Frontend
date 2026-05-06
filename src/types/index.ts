@@ -4,6 +4,7 @@ export interface AuthUser {
   id: string;
   tenantId: string;
   communityId: string;
+  unitId?: string;
   roles: UserRole[];
   phone: string;
   name: string;
@@ -84,7 +85,7 @@ export interface VisitorPass {
   visitor_name: string;
   expected_at: string;
   expires_at: string;
-  created_via: "WHATSAPP" | "ADMIN";
+  created_via: "WHATSAPP" | "ADMIN" | "MOBILE";
   created_at: string;
 }
 

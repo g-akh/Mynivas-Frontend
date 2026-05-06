@@ -24,10 +24,9 @@ export async function createWorkOrder(input: {
   description?: string;
 }): Promise<WorkOrder> {
   const { data } = await apiClient.post("/v1/work-orders", {
-    tenant_id: input.tenantId,
-    community_id: input.communityId,
+    tenantId: input.tenantId,
+    communityId: input.communityId,
     type: input.type,
-    status: "OPEN",
     priority: input.priority,
   });
   return data;
@@ -35,9 +34,43 @@ export async function createWorkOrder(input: {
 
 export async function updateWorkOrder(
   id: string,
-  patch: Partial<{ status: WorkOrderStatus; priority: WorkOrderPriority; assigned_to: string }>
+  patch: Partial<{ dueDate: string; notes: string }>
 ): Promise<WorkOrder> {
   const { data } = await apiClient.patch(`/v1/work-orders/${id}`, patch);
+  return data;
+}
+
+export async function assignWorkOrder(
+  id: string,
+  assignedTo: string,
+  dueDate?: string,
+  note?: string
+): Promise<WorkOrder> {
+  const { data } = await apiClient.post(`/v1/work-orders/${id}/assign`, { assignedTo, dueDate, note });
+  return data;
+}
+
+export async function startWorkOrder(id: string, note?: string): Promise<WorkOrder> {
+  const { data } = await apiClient.post(`/v1/work-orders/${id}/start`, { note });
+  return data;
+}
+
+export async function completeWorkOrder(
+  id: string,
+  notes?: string,
+  proofPhotos?: string[]
+): Promise<WorkOrder> {
+  const { data } = await apiClient.post(`/v1/work-orders/${id}/complete`, { notes, proofPhotos });
+  return data;
+}
+
+export async function blockWorkOrder(id: string, reason: string): Promise<WorkOrder> {
+  const { data } = await apiClient.post(`/v1/work-orders/${id}/block`, { reason });
+  return data;
+}
+
+export async function cancelWorkOrder(id: string, reason: string): Promise<WorkOrder> {
+  const { data } = await apiClient.post(`/v1/work-orders/${id}/cancel`, { reason });
   return data;
 }
 
@@ -46,7 +79,8 @@ export async function rateWorkOrder(
   input: { residentId: string; rating: number; feedback?: string }
 ): Promise<void> {
   await apiClient.post(`/v1/work-orders/${id}/ratings`, {
-    resident_id: input.residentId,
+    workOrderId: id,
+    residentId: input.residentId,
     rating: input.rating,
     feedback: input.feedback,
   });
@@ -65,8 +99,8 @@ export async function createAsset(input: {
   category: string;
 }): Promise<any> {
   const { data } = await apiClient.post("/v1/ppm/assets", {
-    tenant_id: input.tenantId,
-    community_id: input.communityId,
+    tenantId: input.tenantId,
+    communityId: input.communityId,
     name: input.name,
     category: input.category,
     status: "ACTIVE",
@@ -86,11 +120,11 @@ export async function createSchedule(input: {
   nextDueDate: string;
 }): Promise<any> {
   const { data } = await apiClient.post("/v1/ppm/ppm-schedules", {
-    tenant_id: input.tenantId,
-    asset_id: input.assetId,
+    tenantId: input.tenantId,
+    assetId: input.assetId,
     interval: input.interval,
-    next_due_date: input.nextDueDate,
-    is_active: true,
+    nextDueDate: input.nextDueDate,
+    isActive: true,
   });
   return data;
 }

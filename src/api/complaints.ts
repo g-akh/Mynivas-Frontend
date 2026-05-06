@@ -27,9 +27,9 @@ export async function getComplaint(id: string): Promise<Complaint> {
 
 export async function createComplaint(input: CreateComplaintInput): Promise<Complaint> {
   const { data } = await apiClient.post("/v1/complaints", {
-    tenant_id: input.tenantId,
-    community_id: input.communityId,
-    unit_id: input.unitId,
+    tenantId: input.tenantId,
+    communityId: input.communityId,
+    unitId: input.unitId,
     category: input.category,
     priority: input.priority,
     description: input.description,
@@ -39,9 +39,28 @@ export async function createComplaint(input: CreateComplaintInput): Promise<Comp
 
 export async function updateComplaint(
   id: string,
-  patch: Partial<{ status: ComplaintStatus; priority: ComplaintPriority; assigned_to: string; description: string }>
+  patch: Partial<{ priority: ComplaintPriority; description: string }>
 ): Promise<Complaint> {
   const { data } = await apiClient.patch(`/v1/complaints/${id}`, patch);
+  return data;
+}
+
+export async function assignComplaint(
+  id: string,
+  assignedTo: string,
+  note?: string
+): Promise<Complaint> {
+  const { data } = await apiClient.post(`/v1/complaints/${id}/assign`, { assignedTo, note });
+  return data;
+}
+
+export async function changeComplaintStatus(
+  id: string,
+  status: ComplaintStatus,
+  resolutionSummary?: string,
+  note?: string
+): Promise<Complaint> {
+  const { data } = await apiClient.post(`/v1/complaints/${id}/status`, { status, resolutionSummary, note });
   return data;
 }
 

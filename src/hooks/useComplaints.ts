@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { listComplaints, getComplaint, createComplaint, updateComplaint } from "../api/complaints";
+import { listComplaints, getComplaint, createComplaint, updateComplaint, assignComplaint, changeComplaintStatus } from "../api/complaints";
 import type { ComplaintStatus } from "../types";
 
 export function useComplaintList(status?: ComplaintStatus) {
@@ -32,6 +32,30 @@ export function useUpdateComplaint() {
   return useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: Parameters<typeof updateComplaint>[1] }) =>
       updateComplaint(id, patch),
+    onSuccess: (_, { id }) => {
+      qc.invalidateQueries({ queryKey: ["complaints"] });
+      qc.invalidateQueries({ queryKey: ["complaint", id] });
+    },
+  });
+}
+
+export function useAssignComplaint() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, assignedTo, note }: { id: string; assignedTo: string; note?: string }) =>
+      assignComplaint(id, assignedTo, note),
+    onSuccess: (_, { id }) => {
+      qc.invalidateQueries({ queryKey: ["complaints"] });
+      qc.invalidateQueries({ queryKey: ["complaint", id] });
+    },
+  });
+}
+
+export function useChangeComplaintStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status, resolutionSummary, note }: { id: string; status: ComplaintStatus; resolutionSummary?: string; note?: string }) =>
+      changeComplaintStatus(id, status, resolutionSummary, note),
     onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: ["complaints"] });
       qc.invalidateQueries({ queryKey: ["complaint", id] });
