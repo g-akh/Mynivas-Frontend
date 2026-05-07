@@ -12,6 +12,7 @@ import {
   TextInput,
   Modal,
   RefreshControl,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -20,7 +21,7 @@ import AppHeader from "../../../src/components/common/AppHeader";
 import EmptyState from "../../../src/components/common/EmptyState";
 import LoadingButton from "../../../src/components/common/LoadingButton";
 import { SkeletonList } from "../../../src/components/common/SkeletonLoader";
-import { listUsers, createUser } from "../../../src/api/admin";
+import { listUsers, createUser, updateUser, deleteUser } from "../../../src/api/admin";
 import { useAuthStore } from "../../../src/store/auth.store";
 import { showToast } from "../../../src/store/ui.store";
 import { formatRole, formatRelative } from "../../../src/utils/format";
@@ -45,7 +46,7 @@ const ROLE_COLOR: Record<string, string> = {
   RESIDENT: "#3498DB",
 };
 
-function UserCard({ item }: { item: any }) {
+function UserCard({ item, onEdit, onDelete }: { item: any; onEdit: (user: any) => void; onDelete: (user: any) => void }) {
   const roles: string[] = item.roles ?? [];
   return (
     <View style={s.card}>
@@ -63,6 +64,12 @@ function UserCard({ item }: { item: any }) {
               <Text style={s.timeText}>{formatRelative(item.created_at)}</Text>
             ) : null}
           </View>
+          <TouchableOpacity onPress={() => onEdit(item)} style={s.editBtn}>
+            <MaterialIcons name="edit" size={18} color={theme.colors.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => onDelete(item)} style={s.deleteBtn}>
+            <MaterialIcons name="delete" size={18} color={theme.colors.danger} />
+          </TouchableOpacity>
         </View>
       </View>
       <View style={s.rolesRow}>
@@ -86,6 +93,7 @@ export default function AdminUsersScreen() {
   const qc = useQueryClient();
   const { user } = useAuthStore();
   const [showModal, setShowModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<any>(null);
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
   const [selectedRole, setSelectedRole] = useState<UserRole>("RESIDENT");
@@ -115,6 +123,47 @@ export default function AdminUsersScreen() {
     },
     onError: () => showToast({ type: "error", message: "Failed to invite user" }),
   });
+
+  const { mutate: editUser, isPending: isEditing } = useMutation({
+    mutationFn: (vars: { id: string; name: string; status?: string }) =>
+      updateUser(vars.id, { name: vars.name || undefined, status: vars.status }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["users"] });
+      showToast({ type: "success", message: "User updated!" });
+      setEditingUser(null);
+    },
+    onError: () => showToast({ type: "error", message: "Failed to update user" }),
+  });
+
+  const { mutate: removeUser } = useMutation({
+    mutationFn: (userId: string) => deleteUser(userId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["users"] });
+      showToast({ type: "success", message: "User deleted" });
+    },
+    onError: () => showToast({ type: "error", message: "Failed to delete user" }),
+  });
+
+  const handleDelete = (userItem: any) => {
+    Alert.alert(
+      "Delete User",
+      `Are you sure you want to delete ${userItem.name ?? userItem.phone ?? "this user"}? This cannot be undone.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Delete", style: "destructive", onPress: () => removeUser(userItem.id) },
+      ]
+    );
+  };
+
+  const handleEdit = (userItem: any) => {
+    setEditingUser(userItem);
+    setName(userItem.name ?? "");
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingUser) return;
+    editUser({ id: editingUser.id, name: name.trim() });
+  };
 
   const handleInvite = () => {
     let finalPhone = phone.trim();
@@ -151,7 +200,7 @@ export default function AdminUsersScreen() {
               tintColor={theme.colors.primary}
             />
           }
-          renderItem={({ item }) => <UserCard item={item} />}
+          renderItem={({ item }) => <UserCard item={item} onEdit={handleEdit} onDelete={handleDelete} />}
           ListEmptyComponent={
             <EmptyState
               emoji="👥"
@@ -169,6 +218,38 @@ export default function AdminUsersScreen() {
         <MaterialIcons name="person-add" size={24} color="#FFFFFF" />
       </TouchableOpacity>
 
+      {/* Edit User Modal */}
+      <Modal visible={!!editingUser} transparent animationType="slide">
+        <TouchableOpacity
+          style={s.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setEditingUser(null)}
+        >
+          <View style={s.modalSheet}>
+            <Text style={s.modalTitle}>Edit User</Text>
+            <Text style={s.fieldLabel}>Name</Text>
+            <TextInput
+              style={s.input}
+              value={name}
+              onChangeText={setName}
+              placeholder="Full name"
+              placeholderTextColor={theme.colors.textDisabled}
+            />
+            <LoadingButton
+              title="Save Changes"
+              loadingTitle="Saving..."
+              onPress={handleSaveEdit}
+              isLoading={isEditing}
+              style={{ marginTop: theme.spacing.lg }}
+            />
+            <TouchableOpacity style={s.cancelBtn} onPress={() => setEditingUser(null)}>
+              <Text style={s.cancelBtnText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Invite User Modal */}
       <Modal visible={showModal} transparent animationType="slide">
         <TouchableOpacity
           style={s.modalOverlay}
@@ -315,4 +396,6 @@ const s = StyleSheet.create({
   roleChipText: { fontSize: theme.fontSize.xs, fontWeight: theme.fontWeight.semibold },
   cancelBtn: { marginTop: theme.spacing.md, paddingVertical: 12, alignItems: "center" },
   cancelBtnText: { fontSize: theme.fontSize.sm, color: theme.colors.textSecondary },
+  editBtn: { padding: 8, borderRadius: 20, backgroundColor: theme.colors.primary + "15" },
+  deleteBtn: { padding: 8, borderRadius: 20, backgroundColor: theme.colors.danger + "15", marginLeft: 6 },
 });

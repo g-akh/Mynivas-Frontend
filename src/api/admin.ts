@@ -65,8 +65,8 @@ export async function createUnit(
   input: { buildingId: string; unitNumber: string; floor?: number }
 ): Promise<any> {
   const { data } = await apiClient.post(`/v1/communities/${communityId}/units`, {
-    building_id: input.buildingId,
-    unit_number: input.unitNumber,
+    buildingId: input.buildingId,
+    unitNumber: input.unitNumber,
     floor: input.floor,
   });
   return data;
@@ -103,6 +103,11 @@ export async function createUser(input: {
 
 export async function updateUser(userId: string, patch: { name?: string; status?: string }): Promise<any> {
   const { data } = await apiClient.patch(`/v1/users/${userId}`, patch);
+  return data;
+}
+
+export async function deleteUser(userId: string): Promise<any> {
+  const { data } = await apiClient.delete(`/v1/users/${userId}`);
   return data;
 }
 

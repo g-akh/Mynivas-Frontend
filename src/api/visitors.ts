@@ -56,7 +56,7 @@ export async function checkoutVisitor(id: string, note?: string): Promise<Visito
 
 // Visitor Passes (pre-registration)
 export async function listVisitorPasses(): Promise<VisitorPass[]> {
-  const { data } = await apiClient.get("/v1/visitor-passes");
+  const { data } = await apiClient.get("/v1/visitors/visitor-passes");
   return data.passes ?? data.items ?? data ?? [];
 }
 
@@ -68,7 +68,7 @@ export async function createVisitorPass(input: {
   expectedAt: string;
   expiresAt: string;
 }): Promise<VisitorPass> {
-  const { data } = await apiClient.post("/v1/visitor-passes", {
+  const { data } = await apiClient.post("/v1/visitors/visitor-passes", {
     tenantId: input.tenantId,
     unitId: input.unitId,
     residentId: input.residentId,
@@ -85,7 +85,7 @@ export async function createVisitorPass(input: {
 export async function listBlockedVisitors(): Promise<
   { id: string; visitor_name: string; visitor_phone: string | null; reason: string | null }[]
 > {
-  const { data } = await apiClient.get("/v1/blocked-visitors");
+  const { data } = await apiClient.get("/v1/visitors/blocked-visitors");
   return data.blocked ?? data.items ?? data ?? [];
 }
 
@@ -96,7 +96,7 @@ export async function blockVisitor(input: {
   visitorPhone?: string;
   reason?: string;
 }): Promise<void> {
-  await apiClient.post("/v1/blocked-visitors", {
+  await apiClient.post("/v1/visitors/blocked-visitors", {
     tenantId: input.tenantId,
     communityId: input.communityId,
     visitorName: input.visitorName,
