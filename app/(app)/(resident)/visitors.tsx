@@ -13,6 +13,7 @@ import {
   Modal,
   ScrollView,
   Platform,
+  RefreshControl,
 } from "react-native";
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -22,14 +23,14 @@ import AppHeader from "../../../src/components/common/AppHeader";
 import LoadingButton from "../../../src/components/common/LoadingButton";
 import EmptyState from "../../../src/components/common/EmptyState";
 import { SkeletonList } from "../../../src/components/common/SkeletonLoader";
-import { useVisitorPassList, useCreateVisitorPass } from "../../../src/hooks/useVisitors";
+import { useVisitorPassList, useCreateVisitorPass, useVisitorList } from "../../../src/hooks/useVisitors";
 import { useAuthStore } from "../../../src/store/auth.store";
 import { showToast } from "../../../src/store/ui.store";
 import { theme } from "../../../src/theme";
 import { formatDateTime, formatRelative } from "../../../src/utils/format";
 import type { VisitorPass } from "../../../src/types";
 
-type Tab = "REGISTER" | "PASSES";
+type Tab = "REGISTER" | "PASSES" | "HISTORY";
 
 function PassCard({ item }: { item: VisitorPass }) {
   const [showQR, setShowQR] = useState(false);
@@ -249,23 +250,56 @@ function RegisterForm() {
   );
 }
 
+function VisitorHistoryCard({ item }: { item: any }) {
+  const statusColor: Record<string, string> = {
+    PENDING_APPROVAL: "#F39C12",
+    APPROVED: "#27AE60",
+    CHECKED_IN: "#3498DB",
+    CHECKED_OUT: "#7F8C8D",
+    REJECTED: "#E74C3C",
+  };
+  const color = statusColor[item.status] ?? theme.colors.textSecondary;
+  return (
+    <View style={s.card}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+        <View style={{ flex: 1 }}>
+          <Text style={s.visitorName}>{item.visitor_name}</Text>
+          {item.visitor_phone ? <Text style={s.passTime}>{item.visitor_phone}</Text> : null}
+        </View>
+        <View style={[s.statusChip, { backgroundColor: color + "20" }]}>
+          <Text style={[s.statusText, { color }]}>{item.status?.replace(/_/g, " ")}</Text>
+        </View>
+      </View>
+      <Text style={s.expiry}>Type: {item.visitor_type}  •  {formatRelative(item.created_at)}</Text>
+      {item.entry_at && <Text style={[s.expiry, { color: "#27AE60" }]}>Entry: {formatDateTime(item.entry_at)}</Text>}
+      {item.exit_at  && <Text style={[s.expiry, { color: "#7F8C8D" }]}>Exit: {formatDateTime(item.exit_at)}</Text>}
+    </View>
+  );
+}
+
 export default function ResidentVisitorsScreen() {
   const [activeTab, setActiveTab] = useState<Tab>("REGISTER");
-  const { data: passes = [], isLoading } = useVisitorPassList();
+  const { data: passes = [], isLoading: passesLoading } = useVisitorPassList();
+  const { data: history = [], isLoading: historyLoading, refetch: refetchHistory } = useVisitorList(undefined);
+
+  const TABS: { key: Tab; label: string }[] = [
+    { key: "REGISTER", label: "Pre-register" },
+    { key: "PASSES",   label: "My Passes"    },
+    { key: "HISTORY",  label: "History"      },
+  ];
 
   return (
     <SafeAreaView style={s.safe} edges={["top"]}>
       <AppHeader title="Visitors" />
 
       <View style={s.tabRow}>
-        {(["REGISTER", "PASSES"] as Tab[]).map((tab) => {
-          const active = activeTab === tab;
-          const label = tab === "REGISTER" ? "Pre-register" : "My Passes";
+        {TABS.map(({ key, label }) => {
+          const active = activeTab === key;
           return (
             <TouchableOpacity
-              key={tab}
+              key={key}
               style={[s.tab, active && s.tabActive]}
-              onPress={() => setActiveTab(tab)}
+              onPress={() => setActiveTab(key)}
             >
               <Text style={[s.tabText, active && s.tabTextActive]}>{label}</Text>
             </TouchableOpacity>
@@ -275,21 +309,36 @@ export default function ResidentVisitorsScreen() {
 
       {activeTab === "REGISTER" ? (
         <RegisterForm />
-      ) : isLoading ? (
-        <SkeletonList count={3} />
+      ) : activeTab === "PASSES" ? (
+        passesLoading ? (
+          <SkeletonList count={3} />
+        ) : (
+          <FlatList
+            data={passes}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => <PassCard item={item} />}
+            ListEmptyComponent={
+              <EmptyState
+                emoji="🎫"
+                title="No passes yet"
+                subtitle="Create a visitor pass to let guests into the community."
+                actionLabel="Create Pass"
+                onAction={() => setActiveTab("REGISTER")}
+              />
+            }
+            contentContainerStyle={s.listContent}
+          />
+        )
+      ) : historyLoading ? (
+        <SkeletonList count={4} />
       ) : (
         <FlatList
-          data={passes}
+          data={[...history].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <PassCard item={item} />}
+          renderItem={({ item }) => <VisitorHistoryCard item={item} />}
+          refreshControl={<RefreshControl refreshing={false} onRefresh={refetchHistory} tintColor={theme.colors.primary} />}
           ListEmptyComponent={
-            <EmptyState
-              emoji="🎫"
-              title="No passes yet"
-              subtitle="Create a visitor pass to let guests into the community."
-              actionLabel="Create Pass"
-              onAction={() => setActiveTab("REGISTER")}
-            />
+            <EmptyState emoji="📋" title="No visitor history" subtitle="Your visitor activity will appear here." />
           }
           contentContainerStyle={s.listContent}
         />

@@ -17,7 +17,6 @@ interface MenuItem {
   route: string;
   color: string;
 }
-
 const MENU_ITEMS: MenuItem[] = [
   {
     icon: "event-seat",
@@ -27,11 +26,18 @@ const MENU_ITEMS: MenuItem[] = [
     color: "#3498DB",
   },
   {
-    icon: "folder",
-    label: "Documents",
-    subtitle: "Community documents & files",
-    route: "/(app)/(fm)/reports",
-    color: "#9B59B6",
+    icon: "handyman",
+    label: "Vendors",
+    subtitle: "Vendor contacts & service list",
+    route: "/(app)/(fm)/vendors",
+    color: "#8E44AD",
+  },
+  {
+    icon: "calendar-today",
+    label: "Schedule",
+    subtitle: "Today's work orders by priority",
+    route: "/(app)/(fm)/schedule",
+    color: "#E67E22",
   },
   {
     icon: "bar-chart",
@@ -41,18 +47,11 @@ const MENU_ITEMS: MenuItem[] = [
     color: "#27AE60",
   },
   {
-    icon: "build",
-    label: "PPM",
-    subtitle: "Planned preventive maintenance",
-    route: "/(app)/(fm)/work-orders",
-    color: "#E67E22",
-  },
-  {
-    icon: "settings",
-    label: "Settings",
-    subtitle: "App & community settings",
+    icon: "account-circle",
+    label: "Profile",
+    subtitle: "Manage your account",
     route: "/(app)/profile",
-    color: theme.colors.textSecondary,
+    color: "#2C3E50",
   },
 ];
 

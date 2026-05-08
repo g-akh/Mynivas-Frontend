@@ -2,10 +2,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { listComplaints, getComplaint, createComplaint, updateComplaint, assignComplaint, changeComplaintStatus } from "../api/complaints";
 import type { ComplaintStatus } from "../types";
 
-export function useComplaintList(status?: ComplaintStatus) {
+export function useComplaintList(status?: ComplaintStatus, assignedTo?: string) {
   return useQuery({
-    queryKey: ["complaints", status],
-    queryFn: () => listComplaints({ status }),
+    queryKey: ["complaints", status, assignedTo],
+    queryFn: () => listComplaints({ status, assignedTo }),
     staleTime: 30_000,
   });
 }

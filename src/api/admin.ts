@@ -121,6 +121,53 @@ export async function assignUnit(userId: string, unitId: string): Promise<any> {
   return data;
 }
 
+// ── Bulk Import ────────────────────────────────────────────────────────────
+
+export interface ImportRowError {
+  sheet:   string;
+  row:     number;
+  message: string;
+}
+
+export interface ImportSummary {
+  buildings:   { inserted?: number; skipped?: number; willInsert?: number; errors?: number };
+  units:       { inserted?: number; skipped?: number; willInsert?: number; errors?: number };
+  users:       { inserted?: number; skipped?: number; willInsert?: number; errors?: number };
+  assignments: { inserted?: number; skipped?: number; willInsert?: number };
+}
+
+export interface ImportResult {
+  dryRun:   boolean;
+  status?:  string;
+  summary:  ImportSummary;
+  errors:   ImportRowError[];
+  warnings: ImportRowError[];
+}
+
+export async function previewImport(fileUri: string, fileName: string): Promise<ImportResult> {
+  const form = new FormData();
+  form.append("file", { uri: fileUri, name: fileName, type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" } as any);
+  const { data } = await apiClient.post("/v1/users/bulk-import?dry_run=true", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data as ImportResult;
+}
+
+export async function runImport(fileUri: string, fileName: string): Promise<ImportResult> {
+  const form = new FormData();
+  form.append("file", { uri: fileUri, name: fileName, type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" } as any);
+  const { data } = await apiClient.post("/v1/users/bulk-import?dry_run=false", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data as ImportResult;
+}
+
+export async function getImportTemplateUrl(): Promise<string> {
+  // Returns the full URL for the template download — used with Linking.openURL
+  const base = (apiClient.defaults.baseURL ?? "").replace(/\/$/, "");
+  return `${base}/v1/users/bulk-import/template`;
+}
+
 // ── Audit Logs ─────────────────────────────────────────────────────────────
 
 export async function getAuditLog(params?: {

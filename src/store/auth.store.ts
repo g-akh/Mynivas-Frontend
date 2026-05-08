@@ -81,7 +81,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       "TENANT_ADMIN",
       "COMMUNITY_ADMIN",
     ]),
-  isFM: () => get().hasAnyRole(["FM", "COMMUNITY_ADMIN"]),
+  // COMMUNITY_ADMIN goes to Admin panel — FM is strictly the operational field role
+  isFM: () => get().hasRole("FM"),
   isResident: () => get().hasRole("RESIDENT"),
   isGuard: () => get().hasRole("GUARD"),
   isTechnician: () => get().hasRole("TECHNICIAN"),

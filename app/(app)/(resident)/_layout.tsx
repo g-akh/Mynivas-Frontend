@@ -95,10 +95,12 @@ export default function ResidentLayout() {
         }}
       />
 
-      {/* Hide sub-routes from tab bar */}
-      <Tabs.Screen name="amenities" options={{ href: null }} />
-      <Tabs.Screen name="billing" options={{ href: null }} />
-      <Tabs.Screen name="documents" options={{ href: null }} />
+      {/* Hide sub-routes from tab bar — expo-router v6 uses "folder/index" not "folder" */}
+      <Tabs.Screen name="amenities/index" options={{ href: null }} />
+      <Tabs.Screen name="amenities/[id]" options={{ href: null }} />
+      <Tabs.Screen name="billing/index" options={{ href: null }} />
+      <Tabs.Screen name="documents/index" options={{ href: null }} />
+      <Tabs.Screen name="settings" options={{ href: null }} />
     </Tabs>
   );
 }

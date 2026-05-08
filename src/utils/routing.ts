@@ -10,10 +10,10 @@ export function getHomeRoute(roles: UserRole[] | string[]): string {
 
   if (roles.includes("SUPER_ADMIN") || roles.includes("SUPERADMIN") || roles.includes("TENANT_ADMIN")) {
     return "/(app)/(admin)/tenants";
-  } else if (
-    roles.includes("COMMUNITY_ADMIN") ||
-    roles.includes("FM")
-  ) {
+  } else if (roles.includes("COMMUNITY_ADMIN")) {
+    // Community Admin → Admin panel (community-scoped view, not FM operational panel)
+    return "/(app)/(admin)/overview";
+  } else if (roles.includes("FM")) {
     return "/(app)/(fm)/dashboard";
   } else if (roles.includes("TECHNICIAN")) {
     return "/(app)/(technician)/tasks";

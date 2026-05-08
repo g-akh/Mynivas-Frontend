@@ -3,15 +3,20 @@
  * Tabs: Dashboard | Complaints | Visitors | Work Orders | More
  */
 import { Tabs } from "expo-router";
+import { Platform } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthStore } from "../../../src/store/auth.store";
 import { Redirect } from "expo-router";
 import { theme } from "../../../src/theme";
 
 export default function FMLayout() {
   const { isFM } = useAuthStore();
+  const insets = useSafeAreaInsets();
 
   if (!isFM()) return <Redirect href="/(auth)/login" />;
+
+  const bottomPadding = Platform.OS === "android" ? Math.max(insets.bottom, 8) : insets.bottom;
 
   return (
     <Tabs
@@ -22,9 +27,14 @@ export default function FMLayout() {
         tabBarStyle: {
           backgroundColor: theme.colors.surface,
           borderTopColor: theme.colors.border,
-          height: 62,
-          paddingBottom: 8,
+          height: 60 + bottomPadding,
+          paddingBottom: bottomPadding,
           paddingTop: 6,
+          elevation: 8,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.08,
+          shadowRadius: 8,
         },
         tabBarLabelStyle: { fontSize: 11, fontWeight: "500" },
       }}
@@ -74,6 +84,11 @@ export default function FMLayout() {
           ),
         }}
       />
+      {/* Hide sub-route screens from the tab bar — expo-router v6 uses "folder/index" not "folder" */}
+      <Tabs.Screen name="amenities/index" options={{ href: null }} />
+      <Tabs.Screen name="reports/index" options={{ href: null }} />
+      <Tabs.Screen name="vendors/index" options={{ href: null }} />
+      <Tabs.Screen name="schedule/index" options={{ href: null }} />
     </Tabs>
   );
 }

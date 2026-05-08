@@ -80,11 +80,13 @@ export interface Visitor {
 
 export interface VisitorPass {
   id: string;
+  tenant_id: string;
   unit_id: string;
   resident_id: string;
   visitor_name: string;
   expected_at: string;
   expires_at: string;
+  status: "ACTIVE" | "USED" | "EXPIRED" | "CANCELLED";
   created_via: "WHATSAPP" | "ADMIN" | "MOBILE";
   created_at: string;
 }

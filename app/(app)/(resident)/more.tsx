@@ -41,6 +41,13 @@ const MENU_ITEMS: MenuItem[] = [
     color: "#3498DB",
   },
   {
+    icon: "settings",
+    label: "Settings",
+    subtitle: "Household, vehicles, notifications",
+    route: "/(app)/(resident)/settings",
+    color: "#7F8C8D",
+  },
+  {
     icon: "account-circle",
     label: "Profile",
     subtitle: "Manage your account",

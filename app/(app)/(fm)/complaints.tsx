@@ -18,6 +18,7 @@ import StatusBadge from "../../../src/components/common/StatusBadge";
 import EmptyState from "../../../src/components/common/EmptyState";
 import { SkeletonList } from "../../../src/components/common/SkeletonLoader";
 import { useComplaintList } from "../../../src/hooks/useComplaints";
+import { useAuthStore } from "../../../src/store/auth.store";
 import { theme } from "../../../src/theme";
 import { formatRelative, formatDate } from "../../../src/utils/format";
 import type { ComplaintStatus, Complaint } from "../../../src/types";
@@ -106,8 +107,10 @@ function ComplaintCard({ item }: { item: Complaint }) {
 }
 
 export default function FMComplaintsScreen() {
+  const { user } = useAuthStore();
   const [activeStatus, setActiveStatus] = useState<ComplaintStatus | undefined>(undefined);
-  const { data = [], isLoading, refetch } = useComplaintList(activeStatus);
+  // FM sees only complaints assigned to them — backend also enforces this server-side
+  const { data = [], isLoading, refetch } = useComplaintList(activeStatus, user?.id);
 
   return (
     <SafeAreaView style={s.safe} edges={["top"]}>
@@ -152,8 +155,8 @@ export default function FMComplaintsScreen() {
           ListEmptyComponent={
             <EmptyState
               emoji="📋"
-              title="No complaints found"
-              subtitle="No complaints match the selected filter."
+              title="No assigned complaints"
+              subtitle="Complaints assigned to you will appear here."
             />
           }
           contentContainerStyle={s.listContent}

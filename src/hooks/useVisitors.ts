@@ -7,8 +7,9 @@ import {
   checkoutVisitor,
   listVisitorPasses,
   createVisitorPass,
+  createVisitor,
 } from "../api/visitors";
-import type { VisitorStatus } from "../types";
+import type { VisitorStatus, VisitorType } from "../types";
 
 export function useVisitorList(status?: VisitorStatus) {
   return useQuery({
@@ -58,6 +59,21 @@ export function useCheckoutVisitor() {
   return useMutation({
     mutationFn: ({ id, note }: { id: string; note?: string }) =>
       checkoutVisitor(id, note),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["visitors"] }),
+  });
+}
+
+export function useCreateVisitor() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: {
+      tenantId: string;
+      communityId: string;
+      unitId: string;
+      visitorName: string;
+      visitorPhone: string;
+      visitorType: VisitorType;
+    }) => createVisitor(input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["visitors"] }),
   });
 }

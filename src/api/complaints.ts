@@ -13,6 +13,7 @@ export interface CreateComplaintInput {
 export async function listComplaints(params?: {
   status?: ComplaintStatus;
   priority?: ComplaintPriority;
+  assignedTo?: string;
   limit?: number;
   offset?: number;
 }): Promise<Complaint[]> {

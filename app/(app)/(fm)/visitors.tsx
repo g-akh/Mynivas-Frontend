@@ -1,6 +1,7 @@
 /**
- * FM Visitor Log — Phase 06
- * GET /v1/visitors | PATCH /v1/visitors/:id
+ * FM Visitor Overview — read-only operational view.
+ * Approve/Reject belongs to Residents (their own visitors) and Guards (at the gate).
+ * FM sees: who is Inside Now, full visitor log, live counts.
  */
 import React, { useState } from "react";
 import {
@@ -8,7 +9,6 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  TouchableOpacity,
   RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -17,46 +17,23 @@ import AppHeader from "../../../src/components/common/AppHeader";
 import StatusBadge from "../../../src/components/common/StatusBadge";
 import EmptyState from "../../../src/components/common/EmptyState";
 import { SkeletonList } from "../../../src/components/common/SkeletonLoader";
-import { useVisitorList, useApproveVisitor, useRejectVisitor } from "../../../src/hooks/useVisitors";
-import { showToast } from "../../../src/store/ui.store";
+import { useVisitorList } from "../../../src/hooks/useVisitors";
 import { theme } from "../../../src/theme";
 import { formatRelative, formatDateTime } from "../../../src/utils/format";
 import type { Visitor } from "../../../src/types";
 
-type Tab = "PENDING" | "ALL";
+type Tab = "INSIDE" | "ALL";
 
 const VISITOR_TYPE_COLOR: Record<string, string> = {
   GUEST: "#3498DB",
   COURIER: "#F39C12",
   SERVICE: "#9B59B6",
   VENDOR: "#E67E22",
+  DELIVERY: "#E67E22",
 };
 
-function VisitorCard({
-  item,
-  showActions,
-}: {
-  item: Visitor;
-  showActions: boolean;
-}) {
-  const { mutate: approve, isPending: approving } = useApproveVisitor();
-  const { mutate: reject, isPending: rejecting } = useRejectVisitor();
-  const isPending = approving || rejecting;
+function VisitorCard({ item }: { item: Visitor }) {
   const typeColor = VISITOR_TYPE_COLOR[item.visitor_type] ?? theme.colors.primary;
-
-  const handleApprove = () => {
-    approve(
-      { id: item.id },
-      { onSuccess: () => showToast({ type: "success", message: "Visitor approved" }) }
-    );
-  };
-
-  const handleReject = () => {
-    reject(
-      { id: item.id, reason: "Rejected by FM" },
-      { onSuccess: () => showToast({ type: "success", message: "Visitor rejected" }) }
-    );
-  };
 
   return (
     <View style={s.card}>
@@ -82,68 +59,85 @@ function VisitorCard({
         <Text style={s.timeText}>{formatRelative(item.created_at)}</Text>
       </View>
 
+      {/* Entry / Exit times for operational tracking */}
       {item.entry_at ? (
-        <Text style={s.entryText}>
-          <MaterialIcons name="login" size={12} color={theme.colors.textSecondary} />{" "}
-          Entry: {formatDateTime(item.entry_at)}
-        </Text>
-      ) : null}
-
-      {showActions && (
-        <View style={s.actionRow}>
-          <TouchableOpacity
-            style={[s.actionBtn, s.rejectBtn]}
-            onPress={handleReject}
-            disabled={isPending}
-          >
-            <MaterialIcons name="close" size={16} color={theme.colors.danger} />
-            <Text style={[s.actionText, { color: theme.colors.danger }]}>Reject</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[s.actionBtn, s.approveBtn]}
-            onPress={handleApprove}
-            disabled={isPending}
-          >
-            <MaterialIcons name="check" size={16} color="#FFFFFF" />
-            <Text style={[s.actionText, { color: "#FFFFFF" }]}>Approve</Text>
-          </TouchableOpacity>
+        <View style={s.timeRow}>
+          <MaterialIcons name="login" size={12} color={theme.colors.success} />
+          <Text style={s.entryText}>In: {formatDateTime(item.entry_at)}</Text>
+          {item.exit_at ? (
+            <>
+              <MaterialIcons name="logout" size={12} color={theme.colors.danger} style={{ marginLeft: 10 }} />
+              <Text style={s.exitText}>Out: {formatDateTime(item.exit_at)}</Text>
+            </>
+          ) : null}
         </View>
-      )}
+      ) : null}
     </View>
   );
 }
 
 export default function FMVisitorsScreen() {
-  const [activeTab, setActiveTab] = useState<Tab>("PENDING");
+  const [activeTab, setActiveTab] = useState<Tab>("INSIDE");
 
+  const insideQuery = useVisitorList("CHECKED_IN");
+  const allQuery    = useVisitorList(undefined);
   const pendingQuery = useVisitorList("PENDING_APPROVAL");
-  const allQuery = useVisitorList(undefined);
 
-  const current = activeTab === "PENDING" ? pendingQuery : allQuery;
+  const current = activeTab === "INSIDE" ? insideQuery : allQuery;
   const { data = [], isLoading, refetch } = current;
+
+  const insideCount  = insideQuery.data?.length ?? 0;
+  const pendingCount = pendingQuery.data?.length ?? 0;
+  const totalCount   = allQuery.data?.length ?? 0;
+
+  const handleRefresh = () => {
+    insideQuery.refetch();
+    allQuery.refetch();
+    pendingQuery.refetch();
+  };
 
   return (
     <SafeAreaView style={s.safe} edges={["top"]}>
       <AppHeader title="Visitors" />
 
+      {/* Live counts bar */}
+      <View style={s.countsBar}>
+        <View style={s.countItem}>
+          <Text style={[s.countNum, { color: theme.colors.success }]}>{insideCount}</Text>
+          <Text style={s.countLabel}>Inside</Text>
+        </View>
+        <View style={s.countSep} />
+        <View style={s.countItem}>
+          <Text style={[s.countNum, { color: theme.colors.warning }]}>{pendingCount}</Text>
+          <Text style={s.countLabel}>Pending</Text>
+        </View>
+        <View style={s.countSep} />
+        <View style={s.countItem}>
+          <Text style={[s.countNum, { color: theme.colors.textPrimary }]}>{totalCount}</Text>
+          <Text style={s.countLabel}>Total Today</Text>
+        </View>
+      </View>
+
       {/* Tabs */}
       <View style={s.tabRow}>
-        {(["PENDING", "ALL"] as Tab[]).map((tab) => {
-          const active = activeTab === tab;
-          const label = tab === "PENDING" ? "Pending Approval" : "All Visitors";
+        {([
+          { key: "INSIDE" as Tab, label: "Inside Now", count: insideCount },
+          { key: "ALL"    as Tab, label: "All Visitors", count: 0 },
+        ]).map(({ key, label, count }) => {
+          const active = activeTab === key;
           return (
-            <TouchableOpacity
-              key={tab}
+            <View
+              key={key}
               style={[s.tab, active && s.tabActive]}
-              onPress={() => setActiveTab(tab)}
+              onTouchEnd={() => setActiveTab(key)}
             >
               <Text style={[s.tabText, active && s.tabTextActive]}>{label}</Text>
-              {tab === "PENDING" && (pendingQuery.data?.length ?? 0) > 0 && (
+              {count > 0 && (
                 <View style={s.tabBadge}>
-                  <Text style={s.tabBadgeText}>{pendingQuery.data!.length}</Text>
+                  <Text style={s.tabBadgeText}>{count}</Text>
                 </View>
               )}
-            </TouchableOpacity>
+            </View>
           );
         })}
       </View>
@@ -157,17 +151,16 @@ export default function FMVisitorsScreen() {
           refreshControl={
             <RefreshControl
               refreshing={false}
-              onRefresh={refetch}
+              onRefresh={handleRefresh}
               tintColor={theme.colors.primary}
             />
           }
-          renderItem={({ item }) => (
-            <VisitorCard item={item} showActions={activeTab === "PENDING"} />
-          )}
+          renderItem={({ item }) => <VisitorCard item={item} />}
           ListEmptyComponent={
             <EmptyState
-              emoji="🚶"
-              title={activeTab === "PENDING" ? "No pending approvals" : "No visitors found"}
+              emoji={activeTab === "INSIDE" ? "🚪" : "🚶"}
+              title={activeTab === "INSIDE" ? "Nobody inside right now" : "No visitors found"}
+              subtitle={activeTab === "INSIDE" ? "Checked-in visitors will appear here" : "Visitor activity will appear here"}
             />
           }
           contentContainerStyle={s.listContent}
@@ -179,6 +172,19 @@ export default function FMVisitorsScreen() {
 
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: theme.colors.background },
+
+  countsBar: {
+    flexDirection: "row",
+    backgroundColor: theme.colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+    paddingVertical: 12,
+  },
+  countItem: { flex: 1, alignItems: "center", gap: 2 },
+  countNum: { fontSize: theme.fontSize.xl, fontWeight: theme.fontWeight.bold },
+  countLabel: { fontSize: theme.fontSize.xs, color: theme.colors.textSecondary },
+  countSep: { width: 1, backgroundColor: theme.colors.border },
+
   tabRow: {
     flexDirection: "row",
     backgroundColor: theme.colors.surface,
@@ -188,7 +194,7 @@ const s = StyleSheet.create({
   tab: {
     flex: 1,
     flexDirection: "row",
-    paddingVertical: 14,
+    paddingVertical: 13,
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
@@ -202,12 +208,13 @@ const s = StyleSheet.create({
     minWidth: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: theme.colors.danger,
+    backgroundColor: theme.colors.success,
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 4,
   },
   tabBadgeText: { fontSize: 10, color: "#FFFFFF", fontWeight: theme.fontWeight.bold },
+
   listContent: { padding: theme.spacing.md, paddingBottom: theme.spacing.xxl },
   card: {
     backgroundColor: theme.colors.surface,
@@ -215,7 +222,7 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.border,
     padding: theme.spacing.md,
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
     ...theme.shadow.sm,
   },
   cardHeader: {
@@ -233,11 +240,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     borderWidth: 1,
   },
-  visitorName: {
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.textPrimary,
-  },
+  visitorName: { fontSize: theme.fontSize.md, fontWeight: theme.fontWeight.semibold, color: theme.colors.textPrimary },
   visitorPhone: { fontSize: theme.fontSize.xs, color: theme.colors.textSecondary, marginTop: 2 },
   metaRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: theme.spacing.xs },
   typeChip: {
@@ -248,22 +251,7 @@ const s = StyleSheet.create({
   },
   typeText: { fontSize: 10, fontWeight: theme.fontWeight.semibold },
   timeText: { fontSize: theme.fontSize.xs, color: theme.colors.textDisabled },
-  entryText: { fontSize: theme.fontSize.xs, color: theme.colors.textSecondary, marginBottom: theme.spacing.sm },
-  actionRow: { flexDirection: "row", gap: 10, marginTop: theme.spacing.sm },
-  actionBtn: {
-    flex: 1,
-    flexDirection: "row",
-    height: 38,
-    borderRadius: theme.borderRadius.md,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 5,
-  },
-  rejectBtn: {
-    backgroundColor: theme.colors.danger + "15",
-    borderWidth: 1,
-    borderColor: theme.colors.danger + "55",
-  },
-  approveBtn: { backgroundColor: theme.colors.success },
-  actionText: { fontSize: theme.fontSize.sm, fontWeight: theme.fontWeight.semibold },
+  timeRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4 },
+  entryText: { fontSize: theme.fontSize.xs, color: theme.colors.success },
+  exitText:  { fontSize: theme.fontSize.xs, color: theme.colors.danger },
 });
