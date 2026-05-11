@@ -2,7 +2,7 @@
  * Guard — Pre-Approved Visitors
  * Shows active visitor passes created by residents so guard can check them in directly.
  */
-import React from "react";
+import React, { useEffect } from "react";
 import {
   View,
   Text,
@@ -17,7 +17,7 @@ import AppHeader from "../../../src/components/common/AppHeader";
 import EmptyState from "../../../src/components/common/EmptyState";
 import { SkeletonList } from "../../../src/components/common/SkeletonLoader";
 import { useVisitorPassList } from "../../../src/hooks/useVisitors";
-import { theme } from "../../../src/theme";
+import { guardTheme as g } from "../../../src/theme/guardTheme";
 import { formatDateTime, formatRelative } from "../../../src/utils/format";
 import type { VisitorPass } from "../../../src/types";
 
@@ -28,10 +28,10 @@ function PassCard({ item }: { item: VisitorPass }) {
   const isActive  = !isExpired && item.status === "ACTIVE";
 
   const statusColor = isExpired
-    ? theme.colors.textDisabled
+    ? g.colors.textDisabled
     : isActive
-    ? theme.colors.success
-    : theme.colors.warning;
+    ? g.colors.success
+    : g.colors.warning;
 
   const statusLabel = isExpired ? "Expired" : item.status;
 
@@ -53,12 +53,12 @@ function PassCard({ item }: { item: VisitorPass }) {
       </View>
 
       <View style={s.timeRow}>
-        <MaterialIcons name="event" size={12} color={theme.colors.textSecondary} />
+        <MaterialIcons name="event" size={12} color={g.colors.textSecondary} />
         <Text style={s.timeText}>Expected: {formatDateTime(item.expected_at)}</Text>
       </View>
       <View style={s.timeRow}>
-        <MaterialIcons name="timer-off" size={12} color={isExpired ? theme.colors.danger : theme.colors.textSecondary} />
-        <Text style={[s.timeText, isExpired && { color: theme.colors.danger }]}>
+        <MaterialIcons name="timer-off" size={12} color={isExpired ? g.colors.danger : g.colors.textSecondary} />
+        <Text style={[s.timeText, isExpired && { color: g.colors.danger }]}>
           Expires: {formatDateTime(item.expires_at)}
         </Text>
       </View>
@@ -79,6 +79,12 @@ function PassCard({ item }: { item: VisitorPass }) {
 export default function PreApprovedScreen() {
   const { data: passes = [], isLoading, refetch } = useVisitorPassList();
 
+  // Auto-refresh every 30 s so new resident passes appear without pull-to-refresh
+  useEffect(() => {
+    const interval = setInterval(() => refetch(), 30_000);
+    return () => clearInterval(interval);
+  }, [refetch]);
+
   // Sort: active first, then by expected_at
   const sorted = [...passes].sort((a, b) => {
     const aActive = new Date(a.expires_at) > new Date() && a.status === "ACTIVE";
@@ -94,17 +100,17 @@ export default function PreApprovedScreen() {
 
   return (
     <SafeAreaView style={s.safe} edges={["top"]}>
-      <AppHeader title="Pre-Approved" />
+      <AppHeader title="Pre-Approved" gradientColors={["#49225B", "#6E3482", "#7B3F9A"]} />
 
       {/* Summary bar */}
       <View style={s.summaryBar}>
         <View style={s.summaryItem}>
-          <Text style={[s.summaryNum, { color: theme.colors.success }]}>{activeCount}</Text>
+          <Text style={[s.summaryNum, { color: g.colors.success }]}>{activeCount}</Text>
           <Text style={s.summaryLabel}>Active Passes</Text>
         </View>
         <View style={s.summarySep} />
         <View style={s.summaryItem}>
-          <Text style={[s.summaryNum, { color: theme.colors.textPrimary }]}>{passes.length}</Text>
+          <Text style={[s.summaryNum, { color: g.colors.textPrimary }]}>{passes.length}</Text>
           <Text style={s.summaryLabel}>Total Passes</Text>
         </View>
       </View>
@@ -116,7 +122,7 @@ export default function PreApprovedScreen() {
           data={sorted}
           keyExtractor={(item) => item.id}
           refreshControl={
-            <RefreshControl refreshing={false} onRefresh={refetch} tintColor={theme.colors.primary} />
+            <RefreshControl refreshing={false} onRefresh={refetch} tintColor={g.colors.primary} />
           }
           renderItem={({ item }) => <PassCard item={item} />}
           ListEmptyComponent={
@@ -134,27 +140,27 @@ export default function PreApprovedScreen() {
 }
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: theme.colors.background },
-  summaryBar: { flexDirection: "row", backgroundColor: theme.colors.surface, borderBottomWidth: 1, borderBottomColor: theme.colors.border, paddingVertical: 12 },
+  safe: { flex: 1, backgroundColor: g.colors.background },
+  summaryBar: { flexDirection: "row", backgroundColor: g.colors.surface, borderBottomWidth: 1, borderBottomColor: g.colors.border, paddingVertical: 12 },
   summaryItem: { flex: 1, alignItems: "center", gap: 2 },
-  summaryNum: { fontSize: theme.fontSize.xl, fontWeight: theme.fontWeight.bold },
-  summaryLabel: { fontSize: theme.fontSize.xs, color: theme.colors.textSecondary },
-  summarySep: { width: 1, backgroundColor: theme.colors.border },
-  listContent: { padding: theme.spacing.md, paddingBottom: theme.spacing.xxl },
-  card: { backgroundColor: theme.colors.surface, borderRadius: 12, borderWidth: 1, borderColor: theme.colors.border, padding: theme.spacing.md, marginBottom: theme.spacing.sm, ...theme.shadow.sm },
+  summaryNum: { fontSize: g.fontSize.xl, fontWeight: g.fontWeight.bold },
+  summaryLabel: { fontSize: g.fontSize.xs, color: g.colors.textSecondary },
+  summarySep: { width: 1, backgroundColor: g.colors.border },
+  listContent: { padding: g.spacing.md, paddingBottom: g.spacing.xxl },
+  card: { backgroundColor: g.colors.surface, borderRadius: 12, borderWidth: 1, borderColor: g.colors.border, padding: g.spacing.md, marginBottom: g.spacing.sm, ...g.shadow.sm },
   cardExpired: { opacity: 0.55 },
-  cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: theme.spacing.sm },
+  cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: g.spacing.sm },
   nameRow: { flexDirection: "row", alignItems: "center", gap: 10, flex: 1 },
   avatar: { width: 38, height: 38, borderRadius: 19, justifyContent: "center", alignItems: "center" },
-  visitorName: { fontSize: theme.fontSize.md, fontWeight: theme.fontWeight.semibold, color: theme.colors.textPrimary },
-  passId: { fontSize: theme.fontSize.xs, color: theme.colors.textSecondary, marginTop: 2 },
-  statusChip: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: theme.borderRadius.full, borderWidth: 1 },
-  statusText: { fontSize: 11, fontWeight: theme.fontWeight.semibold },
+  visitorName: { fontSize: g.fontSize.md, fontWeight: g.fontWeight.semibold, color: g.colors.textPrimary },
+  passId: { fontSize: g.fontSize.xs, color: g.colors.textSecondary, marginTop: 2 },
+  statusChip: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: g.borderRadius.full, borderWidth: 1 },
+  statusText: { fontSize: 11, fontWeight: g.fontWeight.semibold },
   timeRow: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 4 },
-  timeText: { fontSize: theme.fontSize.xs, color: theme.colors.textSecondary },
-  footer: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: theme.spacing.sm, paddingTop: theme.spacing.sm, borderTopWidth: 1, borderTopColor: theme.colors.border },
-  createdText: { fontSize: 11, color: theme.colors.textDisabled },
+  timeText: { fontSize: g.fontSize.xs, color: g.colors.textSecondary },
+  footer: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: g.spacing.sm, paddingTop: g.spacing.sm, borderTopWidth: 1, borderTopColor: g.colors.border },
+  createdText: { fontSize: 11, color: g.colors.textDisabled },
   activeIndicator: { flexDirection: "row", alignItems: "center", gap: 5 },
-  activeDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: theme.colors.success },
-  activeText: { fontSize: 11, color: theme.colors.success, fontWeight: "600" },
+  activeDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: g.colors.success },
+  activeText: { fontSize: 11, color: g.colors.success, fontWeight: "600" },
 });

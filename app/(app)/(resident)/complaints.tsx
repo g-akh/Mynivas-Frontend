@@ -161,18 +161,33 @@ export default function ResidentComplaintsScreen() {
 
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: theme.colors.background },
-  card: { backgroundColor: theme.colors.surface, borderRadius: 12, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: theme.colors.border, ...theme.shadow.sm },
+  card: {
+    backgroundColor: theme.colors.surface, borderRadius: 14, padding: 14,
+    marginBottom: 12, borderWidth: 1, borderColor: theme.colors.border,
+    ...theme.shadow.sm,
+  },
   cardRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },
-  cat: { fontSize: 14, fontWeight: "600", color: theme.colors.textPrimary, marginBottom: 3 },
+  cat:  { fontSize: 14, fontWeight: "600", color: theme.colors.textPrimary, marginBottom: 3 },
   desc: { fontSize: 12, color: theme.colors.textSecondary, lineHeight: 17 },
   time: { fontSize: 10, color: theme.colors.textDisabled },
-  modalHdr: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 16, borderBottomWidth: 1, borderBottomColor: theme.colors.border },
+  modalHdr: {
+    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
+    padding: 16, borderBottomWidth: 1, borderBottomColor: theme.colors.border,
+  },
   modalTitle: { fontSize: 17, fontWeight: "700", color: theme.colors.textPrimary },
-  label: { fontSize: 13, fontWeight: "500", color: theme.colors.textPrimary, marginBottom: 8 },
-  selector: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", height: 48, borderWidth: 1.5, borderColor: theme.colors.border, borderRadius: 8, paddingHorizontal: 14, backgroundColor: theme.colors.surface },
-  dropdown: { borderWidth: 1, borderColor: theme.colors.border, borderRadius: 8, marginTop: 4, overflow: "hidden" },
-  dropItem: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 14, borderBottomWidth: 1, borderBottomColor: theme.colors.border },
-  dropSel: { backgroundColor: "#EBF5FB" },
-  textarea: { borderWidth: 1.5, borderColor: theme.colors.border, borderRadius: 8, padding: 12, minHeight: 120, fontSize: 14, color: theme.colors.textPrimary, backgroundColor: theme.colors.surface },
+  label: { fontSize: 13, fontWeight: "600", color: theme.colors.textPrimary, marginBottom: 8 },
+  selector: {
+    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
+    height: 48, borderWidth: 1.5, borderColor: theme.colors.border,
+    borderRadius: 10, paddingHorizontal: 14, backgroundColor: theme.colors.surface,
+  },
+  dropdown:  { borderWidth: 1, borderColor: theme.colors.border, borderRadius: 10, marginTop: 4, overflow: "hidden" },
+  dropItem:  { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 14, borderBottomWidth: 1, borderBottomColor: theme.colors.border },
+  dropSel:   { backgroundColor: "#E3F2FD" },
+  textarea: {
+    borderWidth: 1.5, borderColor: theme.colors.border, borderRadius: 10,
+    padding: 12, minHeight: 120, fontSize: 14, color: theme.colors.textPrimary,
+    backgroundColor: theme.colors.surface,
+  },
   charCount: { fontSize: 11, color: theme.colors.textSecondary, marginTop: 4, textAlign: "right" },
 });

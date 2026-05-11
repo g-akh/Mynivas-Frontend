@@ -99,11 +99,17 @@ apiClient.interceptors.response.use(
 
 export function getErrorMessage(error: unknown): string {
   if (axios.isAxiosError(error)) {
-    return (
-      (error.response?.data as any)?.error?.message ??
-      error.message ??
-      "An unexpected error occurred"
-    );
+    const serverMsg = (error.response?.data as any)?.error?.message as
+      | string
+      | undefined;
+    if (serverMsg) return serverMsg;
+    if (error.response) {
+      return error.message ?? "An unexpected error occurred";
+    }
+    if (!error.response && BASE_URL) {
+      return `${error.message ?? "Network error"}. Check EXPO_PUBLIC_API_URL (${BASE_URL}) matches this PC’s LAN IP and port 3000 is reachable.`;
+    }
+    return error.message ?? "An unexpected error occurred";
   }
   return "Network error. Check your connection.";
 }

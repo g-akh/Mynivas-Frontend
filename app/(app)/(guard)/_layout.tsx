@@ -1,14 +1,36 @@
 /**
- * Guard Tab Navigator
- * Tabs: Gate | History | Profile
+ * Guard Tab Navigator — Purple palette
+ * Tabs: Gate | Pre-Approved | Parcels | Alerts | More (Parking · Patrol · History · Profile)
  */
 import { Tabs } from "expo-router";
-import { Platform } from "react-native";
+import { Platform, View, StyleSheet } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthStore } from "../../../src/store/auth.store";
 import { Redirect } from "expo-router";
-import { theme } from "../../../src/theme";
+import { guardTheme as g } from "../../../src/theme/guardTheme";
+
+function ScanTabIcon({ color }: { color: string }) {
+  return (
+    <View style={fab.wrap}>
+      <MaterialIcons name="sensor-door" size={26} color="#FFFFFF" />
+    </View>
+  );
+}
+
+const fab = StyleSheet.create({
+  wrap: {
+    width: 52, height: 52, borderRadius: 26,
+    backgroundColor: g.colors.primary,
+    justifyContent: "center", alignItems: "center",
+    marginBottom: 14,
+    shadowColor: g.colors.primaryDark,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.45,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+});
 
 export default function GuardLayout() {
   const { isGuard } = useAuthStore();
@@ -22,38 +44,43 @@ export default function GuardLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: theme.colors.tabActive,
-        tabBarInactiveTintColor: theme.colors.tabInactive,
+        tabBarActiveTintColor:   g.colors.tabActive,
+        tabBarInactiveTintColor: g.colors.tabInactive,
         tabBarStyle: {
-          backgroundColor: theme.colors.surface,
-          borderTopColor: theme.colors.border,
-          height: 60 + bottomPadding,
+          backgroundColor: g.colors.surface,
+          borderTopColor:  g.colors.border,
+          height: 64 + bottomPadding,
           paddingBottom: bottomPadding,
-          paddingTop: 6,
-          elevation: 8,
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.08,
-          shadowRadius: 8,
+          paddingTop: 8,
+          elevation: 12,
+          shadowColor:  g.colors.primaryDark,
+          shadowOffset: { width: 0, height: -3 },
+          shadowOpacity: 0.15,
+          shadowRadius: 10,
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: "500" },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: "600", marginTop: 2 },
       }}
     >
       <Tabs.Screen
         name="gate"
         options={{
           title: "Gate",
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="sensor-door" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <View>
+              <MaterialIcons name="sensor-door" size={24} color={color} />
+              {focused && (
+                <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: g.colors.primary, alignSelf: "center", marginTop: 2 }} />
+              )}
+            </View>
           ),
         }}
       />
       <Tabs.Screen
         name="preapproved"
         options={{
-          title: "Pre-Approved",
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="verified-user" size={size} color={color} />
+          title: "Approved",
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons name="verified-user" size={24} color={color} />
           ),
         }}
       />
@@ -61,8 +88,8 @@ export default function GuardLayout() {
         name="parcels"
         options={{
           title: "Parcels",
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="inventory" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons name="inventory" size={24} color={color} />
           ),
         }}
       />
@@ -70,17 +97,8 @@ export default function GuardLayout() {
         name="alerts"
         options={{
           title: "Alerts",
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="add-alert" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="parking"
-        options={{
-          title: "Parking",
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="local-parking" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons name="add-alert" size={24} color={color} />
           ),
         }}
       />
@@ -88,8 +106,17 @@ export default function GuardLayout() {
         name="patrol"
         options={{
           title: "Patrol",
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="directions-walk" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons name="directions-walk" size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="parking"
+        options={{
+          title: "Parking",
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons name="local-parking" size={24} color={color} />
           ),
         }}
       />
@@ -97,8 +124,8 @@ export default function GuardLayout() {
         name="history"
         options={{
           title: "History",
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="history" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons name="history" size={24} color={color} />
           ),
         }}
       />
@@ -106,8 +133,8 @@ export default function GuardLayout() {
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="person" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons name="account-circle" size={26} color={color} />
           ),
         }}
       />

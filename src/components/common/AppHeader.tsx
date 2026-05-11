@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useUIStore } from "../../store/ui.store";
 import { theme } from "../../theme";
@@ -12,6 +13,7 @@ interface AppHeaderProps {
   showNotifications?: boolean;
   showProfile?: boolean;
   rightAction?: { icon: string; onPress: () => void; testID?: string };
+  gradientColors?: [string, string, string];
 }
 
 export default function AppHeader({
@@ -20,14 +22,20 @@ export default function AppHeader({
   showNotifications = true,
   showProfile = true,
   rightAction,
+  gradientColors = ["#0D2766", "#1565C0", "#1976D2"],
 }: AppHeaderProps) {
-  const insets = useSafeAreaInsets();
-  const unreadCount = useUIStore((s) => s.unreadCount);
+  const insets       = useSafeAreaInsets();
+  const unreadCount  = useUIStore((s) => s.unreadCount);
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <LinearGradient
+      colors={gradientColors}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={[styles.container, { paddingTop: insets.top }]}
+    >
       <View style={styles.inner}>
-        {/* Left: back button or spacer */}
+        {/* Left */}
         {showBack ? (
           <TouchableOpacity
             onPress={() => router.back()}
@@ -41,12 +49,10 @@ export default function AppHeader({
           <View style={styles.iconBtn} />
         )}
 
-        {/* Center: title */}
-        <Text style={styles.title} numberOfLines={1}>
-          {title}
-        </Text>
+        {/* Center */}
+        <Text style={styles.title} numberOfLines={1}>{title}</Text>
 
-        {/* Right: notifications + profile or custom action */}
+        {/* Right */}
         <View style={styles.rightGroup}>
           {rightAction ? (
             <TouchableOpacity
@@ -54,52 +60,52 @@ export default function AppHeader({
               style={styles.iconBtn}
               testID={rightAction.testID}
             >
-              <MaterialIcons
-                name={rightAction.icon as any}
-                size={24}
-                color="#FFFFFF"
-              />
+              <MaterialIcons name={rightAction.icon as any} size={24} color="#FFFFFF" />
             </TouchableOpacity>
           ) : (
             <>
-              {showNotifications ? (
+              {showNotifications && (
                 <TouchableOpacity
                   style={styles.iconBtn}
                   onPress={() => router.push("/(app)/notifications" as any)}
                   testID="header-notifications"
                 >
                   <MaterialIcons name="notifications" size={24} color="#FFFFFF" />
-                  {unreadCount > 0 ? (
+                  {unreadCount > 0 && (
                     <View style={styles.badge}>
                       <Text style={styles.badgeText}>
                         {unreadCount > 99 ? "99+" : unreadCount}
                       </Text>
                     </View>
-                  ) : null}
+                  )}
                 </TouchableOpacity>
-              ) : null}
-
-              {showProfile ? (
+              )}
+              {showProfile && (
                 <TouchableOpacity
                   style={styles.iconBtn}
                   onPress={() => router.push("/(app)/profile" as any)}
                   testID="header-profile"
                 >
-                  <MaterialIcons name="account-circle" size={28} color="#FFFFFF" />
+                  <View style={styles.avatarCircle}>
+                    <MaterialIcons name="account-circle" size={26} color="#FFFFFF" />
+                  </View>
                 </TouchableOpacity>
-              ) : null}
+              )}
             </>
           )}
         </View>
       </View>
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: theme.colors.primary,
-    ...theme.shadow.sm,
+    shadowColor: theme.colors.primaryDark,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 6,
   },
   inner: {
     height: 56,
@@ -111,36 +117,29 @@ const styles = StyleSheet.create({
   title: {
     flex: 1,
     fontSize: theme.fontSize.lg,
-    fontWeight: theme.fontWeight.semibold,
+    fontWeight: theme.fontWeight.bold,
     color: "#FFFFFF",
     textAlign: "center",
+    letterSpacing: 0.2,
   },
   iconBtn: {
-    width: 40,
-    height: 40,
+    width: 40, height: 40,
     justifyContent: "center",
     alignItems: "center",
     position: "relative",
   },
-  rightGroup: {
-    flexDirection: "row",
-    alignItems: "center",
+  rightGroup: { flexDirection: "row", alignItems: "center" },
+  avatarCircle: {
+    width: 32, height: 32, borderRadius: 16,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    justifyContent: "center", alignItems: "center",
   },
   badge: {
-    position: "absolute",
-    top: 4,
-    right: 4,
-    minWidth: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: theme.colors.danger,
-    justifyContent: "center",
-    alignItems: "center",
+    position: "absolute", top: 4, right: 4,
+    minWidth: 16, height: 16, borderRadius: 8,
+    backgroundColor: "#FFD740",
+    justifyContent: "center", alignItems: "center",
     paddingHorizontal: 2,
   },
-  badgeText: {
-    color: "#FFFFFF",
-    fontSize: 9,
-    fontWeight: theme.fontWeight.bold,
-  },
+  badgeText: { color: theme.colors.primaryDark, fontSize: 9, fontWeight: "800" },
 });

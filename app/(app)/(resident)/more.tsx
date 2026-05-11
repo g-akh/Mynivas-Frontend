@@ -1,188 +1,313 @@
 /**
- * Resident More Menu — Phase 11
+ * Resident Me / Profile screen
  */
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import {
+  View, Text, StyleSheet, TouchableOpacity, ScrollView,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import AppHeader from "../../../src/components/common/AppHeader";
 import { useAuthStore } from "../../../src/store/auth.store";
+import { useBookingList } from "../../../src/hooks/useAmenities";
+import { useVisitorList } from "../../../src/hooks/useVisitors";
+import { useComplaintList } from "../../../src/hooks/useComplaints";
 import { theme } from "../../../src/theme";
 
+/* ─── Menu item types ───────────────────────────────────────────────── */
 interface MenuItem {
   icon: string;
   label: string;
   subtitle: string;
   route: string;
-  color: string;
+  iconBg: string;
+  iconColor: string;
 }
 
-const MENU_ITEMS: MenuItem[] = [
+const ACCOUNT_ITEMS: MenuItem[] = [
   {
-    icon: "folder",
-    label: "Documents",
-    subtitle: "Community & personal documents",
-    route: "/(app)/(resident)/documents",
-    color: "#9B59B6",
-  },
-  {
-    icon: "receipt",
-    label: "Billing",
-    subtitle: "Dues, payments & receipts",
-    route: "/(app)/(resident)/billing",
-    color: "#27AE60",
-  },
-  {
-    icon: "campaign",
-    label: "Announcements",
-    subtitle: "Community notices & alerts",
-    route: "/(app)/(resident)/home",
-    color: "#3498DB",
-  },
-  {
-    icon: "settings",
-    label: "Settings",
-    subtitle: "Household, vehicles, notifications",
+    icon: "home",
+    label: "My residence",
+    subtitle: "A-1204, Skyline Heights",
     route: "/(app)/(resident)/settings",
-    color: "#7F8C8D",
+    iconBg:    "#E3F2FD",
+    iconColor: theme.colors.primary,
   },
   {
-    icon: "account-circle",
-    label: "Profile",
-    subtitle: "Manage your account",
-    route: "/(app)/profile",
-    color: "#E67E22",
+    icon: "credit-card",
+    label: "Payment methods",
+    subtitle: "UPI · 2 cards",
+    route: "/(app)/(resident)/billing",
+    iconBg:    "#E3F2FD",
+    iconColor: theme.colors.primary,
   },
   {
-    icon: "settings",
-    label: "Settings",
-    subtitle: "App preferences",
-    route: "/(app)/profile",
-    color: theme.colors.textSecondary,
+    icon: "notifications",
+    label: "Notifications",
+    subtitle: "Push, Email",
+    route: "/(app)/(resident)/settings",
+    iconBg:    "#E3F2FD",
+    iconColor: theme.colors.primary,
   },
 ];
 
-function MenuCard({ item }: { item: MenuItem }) {
+const PREF_ITEMS: MenuItem[] = [
+  {
+    icon: "shield",
+    label: "Privacy & security",
+    subtitle: "",
+    route: "/(app)/(resident)/settings",
+    iconBg:    "#E3F2FD",
+    iconColor: theme.colors.primary,
+  },
+  {
+    icon: "settings",
+    label: "App settings",
+    subtitle: "",
+    route: "/(app)/(resident)/settings",
+    iconBg:    "#E3F2FD",
+    iconColor: theme.colors.primary,
+  },
+  {
+    icon: "help-outline",
+    label: "Help center",
+    subtitle: "",
+    route: "/(app)/(resident)/settings",
+    iconBg:    "#E3F2FD",
+    iconColor: theme.colors.primary,
+  },
+];
+
+/* ─── Stat Card ─────────────────────────────────────────────────────── */
+function StatCard({ label, value }: { label: string; value: number | string }) {
   return (
-    <TouchableOpacity
-      style={s.menuCard}
-      onPress={() => router.push(item.route as any)}
-      activeOpacity={0.7}
-    >
-      <View style={[s.iconBox, { backgroundColor: item.color + "18" }]}>
-        <MaterialIcons name={item.icon as any} size={26} color={item.color} />
-      </View>
-      <View style={s.menuTextBox}>
-        <Text style={s.menuLabel}>{item.label}</Text>
-        <Text style={s.menuSubtitle}>{item.subtitle}</Text>
-      </View>
-      <MaterialIcons name="chevron-right" size={20} color={theme.colors.textDisabled} />
-    </TouchableOpacity>
+    <View style={s.statCard}>
+      <Text style={s.statLabel}>{label}</Text>
+      <Text style={s.statValue}>
+        {typeof value === "number" ? String(value).padStart(2, "0") : value}
+      </Text>
+    </View>
   );
 }
 
-export default function ResidentMoreScreen() {
+/* ─── Menu Group ────────────────────────────────────────────────────── */
+function MenuGroup({ items }: { items: MenuItem[] }) {
+  return (
+    <View style={s.menuGroup}>
+      {items.map((item, idx) => (
+        <TouchableOpacity
+          key={item.label}
+          style={[s.menuRow, idx < items.length - 1 && s.menuRowBorder]}
+          onPress={() => router.push(item.route as any)}
+          activeOpacity={0.7}
+        >
+          <View style={[s.menuIcon, { backgroundColor: item.iconBg }]}>
+            <MaterialIcons name={item.icon as any} size={20} color={item.iconColor} />
+          </View>
+          <View style={s.menuText}>
+            <Text style={s.menuLabel}>{item.label}</Text>
+            {item.subtitle ? (
+              <Text style={s.menuSubtitle}>{item.subtitle}</Text>
+            ) : null}
+          </View>
+          <MaterialIcons name="chevron-right" size={20} color={theme.colors.textDisabled} />
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+}
+
+/* ─── Main Screen ────────────────────────────────────────────────────── */
+export default function ResidentMeScreen() {
   const { user, logout } = useAuthStore();
+
+  const { data: bookings   = [] } = useBookingList();
+  const { data: visitors   = [] } = useVisitorList();
+  const { data: complaints = [] } = useComplaintList();
+
+  const resolvedCount = complaints.filter((c: any) =>
+    c.status === "RESOLVED" || c.status === "CLOSED"
+  ).length;
+
+  const initials = (user?.name ?? "MN")
+    .split(" ")
+    .map((w: string) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  const unitLabel = user?.unitId ?? "A-000";
+  const role      = "Resident";
 
   return (
     <SafeAreaView style={s.safe} edges={["top"]}>
-      <AppHeader title="More" showNotifications={false} showProfile={false} />
-      <ScrollView contentContainerStyle={s.scroll}>
-        <View style={s.userCard}>
-          <View style={s.avatarCircle}>
-            <Text style={s.avatarText}>
-              {user?.name?.charAt(0)?.toUpperCase() ?? "R"}
-            </Text>
+      <ScrollView showsVerticalScrollIndicator={false}>
+
+        {/* ── Gradient Profile Header ──────────────────────────── */}
+        <LinearGradient
+          colors={["#0D2766", "#1565C0", "#1976D2"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={s.header}
+        >
+          {/* Top nav row */}
+          <View style={s.headerNav}>
+            <TouchableOpacity
+              style={s.headerIconBtn}
+              onPress={() => router.back()}
+            >
+              <MaterialIcons name="arrow-back" size={22} color="#FFFFFF" />
+            </TouchableOpacity>
+            <Text style={s.headerNavTitle}>Profile</Text>
+            <TouchableOpacity
+              style={s.headerIconBtn}
+              onPress={() => router.push("/(app)/(resident)/settings" as any)}
+            >
+              <MaterialIcons name="settings" size={22} color="#FFFFFF" />
+            </TouchableOpacity>
           </View>
-          <View>
-            <Text style={s.userName}>{user?.name ?? "Resident"}</Text>
-            <Text style={s.userPhone}>{user?.phone ?? ""}</Text>
+
+          {/* Avatar + info */}
+          <View style={s.profileSection}>
+            <View style={s.avatarSquare}>
+              <Text style={s.avatarText}>{initials}</Text>
+            </View>
+            <Text style={s.profileName}>{user?.name ?? "Resident"}</Text>
+            <Text style={s.profileRole}>{role} · {unitLabel}</Text>
+            <View style={s.ratingRow}>
+              <MaterialIcons name="star" size={16} color="#FFD740" />
+              <Text style={s.ratingText}>4.9 community rating</Text>
+            </View>
           </View>
+        </LinearGradient>
+
+        {/* ── Stats Row ───────────────────────────────────────── */}
+        <View style={s.statsContainer}>
+          <StatCard label="Bookings"  value={bookings.length}   />
+          <StatCard label="Visitors"  value={visitors.length}   />
+          <StatCard label="Resolved"  value={resolvedCount}     />
         </View>
 
-        <Text style={s.sectionTitle}>Quick Access</Text>
+        {/* ── Content ─────────────────────────────────────────── */}
+        <View style={s.content}>
 
-        {MENU_ITEMS.map((item) => (
-          <MenuCard key={item.label} item={item} />
-        ))}
+          {/* Account section */}
+          <Text style={s.sectionLabel}>Account</Text>
+          <MenuGroup items={ACCOUNT_ITEMS} />
 
-        <TouchableOpacity style={s.logoutBtn} onPress={() => logout()}>
-          <MaterialIcons name="logout" size={20} color={theme.colors.danger} />
-          <Text style={s.logoutText}>Logout</Text>
-        </TouchableOpacity>
+          {/* Preferences section */}
+          <Text style={[s.sectionLabel, { marginTop: 24 }]}>Preferences</Text>
+          <MenuGroup items={PREF_ITEMS} />
+
+          {/* Logout */}
+          <TouchableOpacity style={s.logoutBtn} onPress={() => logout()}>
+            <MaterialIcons name="logout" size={18} color={theme.colors.danger} />
+            <Text style={s.logoutText}>Log out</Text>
+          </TouchableOpacity>
+
+          {/* Version */}
+          <Text style={s.version}>MyNivas v1.0</Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
+/* ─── Styles ─────────────────────────────────────────────────────────── */
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: theme.colors.background },
-  scroll: { padding: theme.spacing.md, paddingBottom: theme.spacing.xxl },
-  userCard: {
+
+  /* Header */
+  header: { paddingBottom: 32 },
+  headerNav: {
     flexDirection: "row",
     alignItems: "center",
-    gap: theme.spacing.md,
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 10,
+  },
+  headerNavTitle: { fontSize: 17, fontWeight: "700", color: "#FFFFFF", letterSpacing: 0.3 },
+  headerIconBtn: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    justifyContent: "center", alignItems: "center",
+  },
+
+  profileSection: { alignItems: "center", paddingTop: 8, paddingBottom: 4 },
+  avatarSquare: {
+    width: 84, height: 84, borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.22)",
+    justifyContent: "center", alignItems: "center",
+    marginBottom: 14,
+    borderWidth: 2, borderColor: "rgba(255,255,255,0.35)",
+  },
+  avatarText:   { fontSize: 32, fontWeight: "800", color: "#FFFFFF" },
+  profileName:  { fontSize: 22, fontWeight: "800", color: "#FFFFFF", letterSpacing: -0.2 },
+  profileRole:  { fontSize: 14, color: "rgba(255,255,255,0.78)", marginTop: 4 },
+  ratingRow:    { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 8 },
+  ratingText:   { fontSize: 14, color: "#FFFFFF", fontWeight: "600" },
+
+  /* Stats */
+  statsContainer: {
+    flexDirection: "row",
+    paddingHorizontal: 16,
+    gap: 12,
+    marginTop: -28,   // overlap the gradient
+    zIndex: 10,
+    marginBottom: 8,
+  },
+  statCard: {
+    flex: 1,
     backgroundColor: theme.colors.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    padding: theme.spacing.md,
-    marginBottom: theme.spacing.xl,
-    ...theme.shadow.sm,
+    borderRadius: 14, padding: 14,
+    alignItems: "flex-start",
+    ...theme.shadow.md,
   },
-  avatarCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: theme.colors.primary,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  avatarText: { fontSize: theme.fontSize.xl, fontWeight: theme.fontWeight.bold, color: "#FFFFFF" },
-  userName: { fontSize: theme.fontSize.md, fontWeight: theme.fontWeight.semibold, color: theme.colors.textPrimary },
-  userPhone: { fontSize: theme.fontSize.sm, color: theme.colors.textSecondary, marginTop: 2 },
-  sectionTitle: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.semibold,
+  statLabel: { fontSize: 12, color: theme.colors.textSecondary, fontWeight: "500", marginBottom: 6 },
+  statValue: { fontSize: 26, fontWeight: "800", color: theme.colors.textPrimary },
+
+  /* Content */
+  content: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 40 },
+  sectionLabel: {
+    fontSize: 13, fontWeight: "700",
     color: theme.colors.textSecondary,
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
-    marginBottom: theme.spacing.sm,
+    marginBottom: 10, letterSpacing: 0.3,
   },
-  menuCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: theme.spacing.md,
+
+  /* Menu group */
+  menuGroup: {
     backgroundColor: theme.colors.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    padding: theme.spacing.md,
-    marginBottom: theme.spacing.sm,
+    borderRadius: 16,
+    overflow: "hidden",
+    borderWidth: 1, borderColor: theme.colors.border,
     ...theme.shadow.sm,
   },
-  iconBox: {
-    width: 48,
-    height: 48,
-    borderRadius: theme.borderRadius.md,
-    justifyContent: "center",
-    alignItems: "center",
+  menuRow: {
+    flexDirection: "row", alignItems: "center",
+    gap: 14, paddingHorizontal: 16, paddingVertical: 15,
   },
-  menuTextBox: { flex: 1 },
-  menuLabel: { fontSize: theme.fontSize.md, fontWeight: theme.fontWeight.semibold, color: theme.colors.textPrimary },
-  menuSubtitle: { fontSize: theme.fontSize.xs, color: theme.colors.textSecondary, marginTop: 2 },
+  menuRowBorder: {
+    borderBottomWidth: 1, borderBottomColor: theme.colors.background,
+  },
+  menuIcon: {
+    width: 40, height: 40, borderRadius: 12,
+    justifyContent: "center", alignItems: "center",
+    flexShrink: 0,
+  },
+  menuText:     { flex: 1 },
+  menuLabel:    { fontSize: 15, fontWeight: "600", color: theme.colors.textPrimary },
+  menuSubtitle: { fontSize: 12, color: theme.colors.textSecondary, marginTop: 2 },
+
+  /* Logout */
   logoutBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    marginTop: theme.spacing.xl,
-    paddingVertical: 14,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.danger + "55",
-    backgroundColor: theme.colors.danger + "10",
+    flexDirection: "row", alignItems: "center", justifyContent: "center",
+    gap: 8, marginTop: 28, paddingVertical: 15,
+    borderRadius: 14, borderWidth: 1.5,
+    borderColor: theme.colors.danger + "44",
+    backgroundColor: theme.colors.danger + "08",
   },
-  logoutText: { fontSize: theme.fontSize.md, fontWeight: theme.fontWeight.semibold, color: theme.colors.danger },
+  logoutText: { fontSize: 15, fontWeight: "700", color: theme.colors.danger },
+  version:    { textAlign: "center", fontSize: 12, color: theme.colors.textDisabled, marginTop: 16 },
 });

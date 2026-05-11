@@ -28,7 +28,7 @@ import { useComplaintList } from "../../../src/hooks/useComplaints";
 import { createComplaint } from "../../../src/api/complaints";
 import { useAuthStore } from "../../../src/store/auth.store";
 import { showToast } from "../../../src/store/ui.store";
-import { theme } from "../../../src/theme";
+import { guardTheme as g } from "../../../src/theme/guardTheme";
 import { formatRelative } from "../../../src/utils/format";
 import type { Complaint } from "../../../src/types";
 
@@ -48,7 +48,7 @@ const ALERT_TYPES: { key: string; label: string; icon: string; color: string; pr
 
 function IncidentCard({ item }: { item: Complaint }) {
   const priorityColor: Record<string, string> = { LOW: "#27AE60", MEDIUM: "#F39C12", HIGH: "#E67E22", CRITICAL: "#E74C3C" };
-  const color = priorityColor[item.priority] ?? theme.colors.textSecondary;
+  const color = priorityColor[item.priority] ?? g.colors.textSecondary;
 
   return (
     <View style={s.card}>
@@ -126,7 +126,7 @@ function ReportModal({ visible, onClose }: { visible: boolean; onClose: () => vo
                   style={[s.typeChip, active && { backgroundColor: t.color + "15", borderColor: t.color }]}
                   onPress={() => setAlertType(t)}
                 >
-                  <MaterialIcons name={t.icon as any} size={16} color={active ? t.color : theme.colors.textSecondary} />
+                  <MaterialIcons name={t.icon as any} size={16} color={active ? t.color : g.colors.textSecondary} />
                   <Text style={[s.typeChipText, active && { color: t.color, fontWeight: "700" }]}>{t.label}</Text>
                 </TouchableOpacity>
               );
@@ -135,9 +135,9 @@ function ReportModal({ visible, onClose }: { visible: boolean; onClose: () => vo
 
           {/* Priority indicator */}
           <View style={s.priorityRow}>
-            <MaterialIcons name="flag" size={14} color={theme.colors.textSecondary} />
+            <MaterialIcons name="flag" size={14} color={g.colors.textSecondary} />
             <Text style={s.priorityLabel}>Priority: </Text>
-            <Text style={[s.priorityValue, { color: alertType.priority === "CRITICAL" ? "#E74C3C" : alertType.priority === "HIGH" ? "#E67E22" : theme.colors.textSecondary }]}>
+            <Text style={[s.priorityValue, { color: alertType.priority === "CRITICAL" ? "#E74C3C" : alertType.priority === "HIGH" ? "#E67E22" : g.colors.textSecondary }]}>
               {alertType.priority}
             </Text>
           </View>
@@ -148,7 +148,7 @@ function ReportModal({ visible, onClose }: { visible: boolean; onClose: () => vo
             value={description}
             onChangeText={setDescription}
             placeholder="Describe what happened, location, persons involved…"
-            placeholderTextColor={theme.colors.textDisabled}
+            placeholderTextColor={g.colors.textDisabled}
             multiline
             numberOfLines={4}
           />
@@ -158,7 +158,7 @@ function ReportModal({ visible, onClose }: { visible: boolean; onClose: () => vo
             loadingTitle="Reporting…"
             onPress={handleSubmit}
             isLoading={isPending}
-            style={{ marginTop: theme.spacing.lg, backgroundColor: "#E74C3C" }}
+            style={{ marginTop: g.spacing.lg, backgroundColor: "#E74C3C" }}
           />
           <TouchableOpacity style={s.cancelRow} onPress={onClose}>
             <Text style={s.cancelText}>Cancel</Text>
@@ -184,7 +184,7 @@ export default function AlertsScreen() {
 
   return (
     <SafeAreaView style={s.safe} edges={["top"]}>
-      <AppHeader title="Security Alerts" />
+      <AppHeader title="Security Alerts" gradientColors={["#49225B", "#6E3482", "#7B3F9A"]} />
 
       {/* Counts bar */}
       <View style={s.countsBar}>
@@ -194,12 +194,12 @@ export default function AlertsScreen() {
         </View>
         <View style={s.countSep} />
         <View style={s.countItem}>
-          <Text style={[s.countNum, { color: theme.colors.success }]}>{resolvedCount}</Text>
+          <Text style={[s.countNum, { color: g.colors.success }]}>{resolvedCount}</Text>
           <Text style={s.countLabel}>Resolved</Text>
         </View>
         <View style={s.countSep} />
         <View style={s.countItem}>
-          <Text style={[s.countNum, { color: theme.colors.textPrimary }]}>{securityIncidents.length}</Text>
+          <Text style={[s.countNum, { color: g.colors.textPrimary }]}>{securityIncidents.length}</Text>
           <Text style={s.countLabel}>Total</Text>
         </View>
       </View>
@@ -210,7 +210,7 @@ export default function AlertsScreen() {
         <FlatList
           data={securityIncidents}
           keyExtractor={(item) => item.id}
-          refreshControl={<RefreshControl refreshing={false} onRefresh={refetch} tintColor={theme.colors.primary} />}
+          refreshControl={<RefreshControl refreshing={false} onRefresh={refetch} tintColor={g.colors.primary} />}
           renderItem={({ item }) => <IncidentCard item={item} />}
           ListEmptyComponent={
             <EmptyState emoji="🔒" title="No incidents reported" subtitle="Tap the alert button to report a security incident." />
@@ -232,35 +232,35 @@ export default function AlertsScreen() {
 // ─── styles ───────────────────────────────────────────────────────────────────
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: theme.colors.background },
-  countsBar: { flexDirection: "row", backgroundColor: theme.colors.surface, borderBottomWidth: 1, borderBottomColor: theme.colors.border, paddingVertical: 12 },
+  safe: { flex: 1, backgroundColor: g.colors.background },
+  countsBar: { flexDirection: "row", backgroundColor: g.colors.surface, borderBottomWidth: 1, borderBottomColor: g.colors.border, paddingVertical: 12 },
   countItem: { flex: 1, alignItems: "center", gap: 2 },
-  countNum: { fontSize: theme.fontSize.xl, fontWeight: theme.fontWeight.bold },
-  countLabel: { fontSize: theme.fontSize.xs, color: theme.colors.textSecondary },
-  countSep: { width: 1, backgroundColor: theme.colors.border },
-  listContent: { padding: theme.spacing.md, paddingBottom: 90 },
-  card: { backgroundColor: theme.colors.surface, borderRadius: 12, borderWidth: 1, borderColor: theme.colors.border, padding: theme.spacing.md, marginBottom: theme.spacing.sm, ...theme.shadow.sm },
+  countNum: { fontSize: g.fontSize.xl, fontWeight: g.fontWeight.bold },
+  countLabel: { fontSize: g.fontSize.xs, color: g.colors.textSecondary },
+  countSep: { width: 1, backgroundColor: g.colors.border },
+  listContent: { padding: g.spacing.md, paddingBottom: 90 },
+  card: { backgroundColor: g.colors.surface, borderRadius: 12, borderWidth: 1, borderColor: g.colors.border, padding: g.spacing.md, marginBottom: g.spacing.sm, ...g.shadow.sm },
   cardHeader: { flexDirection: "row", gap: 10, marginBottom: 6 },
   iconWrap: { width: 36, height: 36, borderRadius: 10, backgroundColor: "#E74C3C20", justifyContent: "center", alignItems: "center" },
-  category: { fontSize: theme.fontSize.sm, fontWeight: theme.fontWeight.semibold, color: theme.colors.textPrimary },
-  description: { fontSize: theme.fontSize.xs, color: theme.colors.textSecondary, marginTop: 2, lineHeight: 16 },
+  category: { fontSize: g.fontSize.sm, fontWeight: g.fontWeight.semibold, color: g.colors.textPrimary },
+  description: { fontSize: g.fontSize.xs, color: g.colors.textSecondary, marginTop: 2, lineHeight: 16 },
   rightCol: { alignItems: "flex-end", gap: 4 },
-  priorityChip: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: theme.borderRadius.full, borderWidth: 1 },
-  priorityText: { fontSize: 10, fontWeight: theme.fontWeight.semibold },
-  timeText: { fontSize: 11, color: theme.colors.textDisabled },
-  fab: { position: "absolute", bottom: 28, right: 20, width: 56, height: 56, borderRadius: 28, backgroundColor: "#E74C3C", justifyContent: "center", alignItems: "center", ...theme.shadow.lg },
+  priorityChip: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: g.borderRadius.full, borderWidth: 1 },
+  priorityText: { fontSize: 10, fontWeight: g.fontWeight.semibold },
+  timeText: { fontSize: 11, color: g.colors.textDisabled },
+  fab: { position: "absolute", bottom: 28, right: 20, width: 56, height: 56, borderRadius: 28, backgroundColor: "#E74C3C", justifyContent: "center", alignItems: "center", ...g.shadow.lg },
   overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "flex-end" },
-  sheet: { backgroundColor: theme.colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: theme.spacing.xl, maxHeight: "90%" },
-  sheetTitle: { fontSize: theme.fontSize.lg, fontWeight: theme.fontWeight.bold, color: theme.colors.textPrimary, marginBottom: theme.spacing.lg },
-  fieldLabel: { fontSize: theme.fontSize.sm, fontWeight: theme.fontWeight.semibold, color: theme.colors.textPrimary, marginBottom: 8, marginTop: theme.spacing.md },
+  sheet: { backgroundColor: g.colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: g.spacing.xl, maxHeight: "90%" },
+  sheetTitle: { fontSize: g.fontSize.lg, fontWeight: g.fontWeight.bold, color: g.colors.textPrimary, marginBottom: g.spacing.lg },
+  fieldLabel: { fontSize: g.fontSize.sm, fontWeight: g.fontWeight.semibold, color: g.colors.textPrimary, marginBottom: 8, marginTop: g.spacing.md },
   typeGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  typeChip: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 10, paddingVertical: 7, borderRadius: theme.borderRadius.full, borderWidth: 1, borderColor: theme.colors.border },
-  typeChipText: { fontSize: theme.fontSize.xs, color: theme.colors.textSecondary },
-  priorityRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: theme.spacing.sm },
-  priorityLabel: { fontSize: theme.fontSize.xs, color: theme.colors.textSecondary },
-  priorityValue: { fontSize: theme.fontSize.xs, fontWeight: "700" },
-  input: { borderWidth: 1, borderColor: theme.colors.border, borderRadius: theme.borderRadius.md, paddingHorizontal: 12, paddingVertical: 10, fontSize: theme.fontSize.sm, color: theme.colors.textPrimary, backgroundColor: theme.colors.background },
+  typeChip: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 10, paddingVertical: 7, borderRadius: g.borderRadius.full, borderWidth: 1, borderColor: g.colors.border },
+  typeChipText: { fontSize: g.fontSize.xs, color: g.colors.textSecondary },
+  priorityRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: g.spacing.sm },
+  priorityLabel: { fontSize: g.fontSize.xs, color: g.colors.textSecondary },
+  priorityValue: { fontSize: g.fontSize.xs, fontWeight: "700" },
+  input: { borderWidth: 1, borderColor: g.colors.border, borderRadius: g.borderRadius.md, paddingHorizontal: 12, paddingVertical: 10, fontSize: g.fontSize.sm, color: g.colors.textPrimary, backgroundColor: g.colors.background },
   textArea: { height: 100, textAlignVertical: "top" },
-  cancelRow: { marginTop: theme.spacing.md, alignItems: "center", paddingVertical: 8 },
-  cancelText: { fontSize: theme.fontSize.sm, color: theme.colors.textSecondary },
+  cancelRow: { marginTop: g.spacing.md, alignItems: "center", paddingVertical: 8 },
+  cancelText: { fontSize: g.fontSize.sm, color: g.colors.textSecondary },
 });

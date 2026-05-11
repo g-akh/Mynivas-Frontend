@@ -1,56 +1,54 @@
-export const theme = {
+/**
+ * Guard / Security app theme — Purple palette
+ * #49225B · #6E3482 · #A56ABD · #E7DBEF · #F5EBFA
+ */
+export const guardTheme = {
   colors: {
-    primary:       "#1565C0",  // medium blue — buttons, accents
-    primaryDark:   "#0D2766",  // dark navy — gradient start, header
-    primaryMid:    "#1976D2",  // mid-blue — gradient middle
-    primaryLight:  "#42A5F5",  // light blue — gradient end, tints
-    secondary:     "#26A69A",  // teal — secondary actions
-    accent:        "#FB8C00",  // amber — warnings, highlights
+    primary:       "#6E3482",   // medium purple — buttons, accents
+    primaryDark:   "#49225B",   // dark purple   — gradient start, header
+    primaryMid:    "#6E3482",   // mid purple    — gradient middle
+    primaryLight:  "#A56ABD",   // light purple  — tints, icons
+    secondary:     "#A56ABD",   // light purple  — secondary actions
+    accent:        "#CE93D8",   // soft violet   — highlights
     success:       "#43A047",
     danger:        "#E53935",
     warning:       "#FB8C00",
-    info:          "#039BE5",
-    background:    "#E8F4FD",  // very light blue page background
-    surface:       "#FFFFFF",
-    border:        "#BBDEFB",  // light blue border
-    textPrimary:   "#1A2F6B",  // dark navy text
-    textSecondary: "#546E7A",
-    textDisabled:  "#90A4AE",
-    tabActive:     "#1565C0",
-    tabInactive:   "#78909C",
-    headerBg:      "#0D2766",
+    info:          "#8E24AA",
+    background:    "#EDE0F5",   // page background — between E7DBEF and F5EBFA
+    surface:       "#F5EBFA",   // card / surface
+    border:        "#E7DBEF",   // very light purple border
+    textPrimary:   "#49225B",   // dark purple text
+    textSecondary: "#7B5A8A",   // medium muted purple
+    textDisabled:  "#B89EC5",   // light muted purple
+    tabActive:     "#6E3482",
+    tabInactive:   "#A56ABD",
+    headerBg:      "#49225B",
     headerText:    "#FFFFFF",
   },
 
   status: {
-    // Complaints
-    NEW:         "#1E88E5",
-    ASSIGNED:    "#7B1FA2",
+    NEW:         "#7B1FA2",
+    ASSIGNED:    "#6E3482",
     IN_PROGRESS: "#FB8C00",
     RESOLVED:    "#43A047",
     CLOSED:      "#78909C",
-    // Bookings / Amenities
     PENDING:     "#FB8C00",
     CONFIRMED:   "#43A047",
     REJECTED:    "#E53935",
     CANCELLED:   "#78909C",
     COMPLETED:   "#00897B",
-    // Visitors
     APPROVED:    "#43A047",
-    CHECKED_IN:  "#1E88E5",
+    CHECKED_IN:  "#6E3482",
     CHECKED_OUT: "#78909C",
     AUTO_CLOSED: "#B0BEC5",
-    // Billing
     PAID:        "#43A047",
     OVERDUE:     "#E53935",
     WAIVED:      "#78909C",
-    // Priority
     LOW:         "#43A047",
     MEDIUM:      "#FB8C00",
     HIGH:        "#EF6C00",
     CRITICAL:    "#E53935",
-    // Notification
-    SENT:        "#1E88E5",
+    SENT:        "#7B1FA2",
     DELIVERED:   "#43A047",
     READ:        "#00897B",
     FAILED:      "#E53935",
@@ -84,13 +82,13 @@ export const theme = {
   },
 
   fontSize: {
-    xs:    11,
-    sm:    13,
-    md:    15,
-    lg:    17,
-    xl:    20,
-    xxl:   24,
-    xxxl:  30,
+    xs:      11,
+    sm:      13,
+    md:      15,
+    lg:      17,
+    xl:      20,
+    xxl:     24,
+    xxxl:    30,
     display: 36,
   },
 
@@ -103,29 +101,27 @@ export const theme = {
 
   shadow: {
     sm: {
-      shadowColor: "#1565C0",
+      shadowColor: "#6E3482",
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.10,
       shadowRadius: 3,
       elevation: 2,
     },
     md: {
-      shadowColor: "#1565C0",
+      shadowColor: "#49225B",
       shadowOffset: { width: 0, height: 3 },
       shadowOpacity: 0.14,
       shadowRadius: 6,
       elevation: 4,
     },
     lg: {
-      shadowColor: "#000",
+      shadowColor: "#49225B",
       shadowOffset: { width: 0, height: 6 },
-      shadowOpacity: 0.18,
+      shadowOpacity: 0.20,
       shadowRadius: 12,
       elevation: 8,
     },
   },
 };
 
-export type Theme = typeof theme;
-export type StatusKey = keyof typeof theme.status;
-export type PriorityKey = keyof typeof theme.priority;
+export type GuardTheme = typeof guardTheme;

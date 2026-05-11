@@ -17,11 +17,11 @@ import { SkeletonList } from "../../../src/components/common/SkeletonLoader";
 import { listPatrolLogs, createPatrolLog, PatrolLog } from "../../../src/api/community";
 import { useAuthStore } from "../../../src/store/auth.store";
 import { showToast } from "../../../src/store/ui.store";
-import { theme } from "../../../src/theme";
+import { guardTheme as g } from "../../../src/theme/guardTheme";
 import { formatRelative } from "../../../src/utils/format";
 
 const STATUS_OPTIONS = [
-  { key: "OK",       label: "All Clear",  icon: "check-circle",   color: theme.colors.success },
+  { key: "OK",       label: "All Clear",  icon: "check-circle",   color: g.colors.success },
   { key: "ALERT",    label: "Alert",      icon: "warning",         color: "#F39C12" },
   { key: "INCIDENT", label: "Incident",   icon: "report-problem",  color: "#E74C3C" },
 ];
@@ -95,7 +95,7 @@ function LogPatrolModal({ visible, communityId, guardName, onClose }: {
             contentContainerStyle={{ gap: 8, paddingBottom: 8 }}
           />
           {location === "Other" && (
-            <TextInput style={s.input} value={customLoc} onChangeText={setCustomLoc} placeholder="Enter location" placeholderTextColor={theme.colors.textDisabled} />
+            <TextInput style={s.input} value={customLoc} onChangeText={setCustomLoc} placeholder="Enter location" placeholderTextColor={g.colors.textDisabled} />
           )}
 
           <Text style={s.fieldLabel}>Status</Text>
@@ -119,10 +119,10 @@ function LogPatrolModal({ visible, communityId, guardName, onClose }: {
             onChangeText={setNotes}
             placeholder="Observations, issues, anything to flag…"
             multiline
-            placeholderTextColor={theme.colors.textDisabled}
+            placeholderTextColor={g.colors.textDisabled}
           />
 
-          <LoadingButton title="Save Patrol Log" loadingTitle="Saving…" onPress={() => mutate()} isLoading={isPending} style={{ marginTop: theme.spacing.lg }} />
+          <LoadingButton title="Save Patrol Log" loadingTitle="Saving…" onPress={() => mutate()} isLoading={isPending} style={{ marginTop: g.spacing.lg }} />
           <TouchableOpacity style={s.cancelRow} onPress={onClose}><Text style={s.cancelText}>Cancel</Text></TouchableOpacity>
         </View>
       </TouchableOpacity>
@@ -150,11 +150,11 @@ export default function PatrolScreen() {
 
   return (
     <SafeAreaView style={s.safe} edges={["top"]}>
-      <AppHeader title="Patrol Log" />
+      <AppHeader title="Patrol Log" gradientColors={["#49225B", "#6E3482", "#7B3F9A"]} />
 
       <View style={s.countsBar}>
         <View style={s.countItem}>
-          <Text style={[s.countNum, { color: theme.colors.primary }]}>{todayLogs.length}</Text>
+          <Text style={[s.countNum, { color: g.colors.primary }]}>{todayLogs.length}</Text>
           <Text style={s.countLabel}>Today</Text>
         </View>
         <View style={s.countSep} />
@@ -164,7 +164,7 @@ export default function PatrolScreen() {
         </View>
         <View style={s.countSep} />
         <View style={s.countItem}>
-          <Text style={[s.countNum, { color: theme.colors.textPrimary }]}>{logs.length}</Text>
+          <Text style={[s.countNum, { color: g.colors.textPrimary }]}>{logs.length}</Text>
           <Text style={s.countLabel}>Total</Text>
         </View>
       </View>
@@ -172,7 +172,7 @@ export default function PatrolScreen() {
       {isLoading ? <SkeletonList count={4} /> : (
         <FlatList
           data={logs} keyExtractor={(item) => item.id}
-          refreshControl={<RefreshControl refreshing={false} onRefresh={refetch} tintColor={theme.colors.primary} />}
+          refreshControl={<RefreshControl refreshing={false} onRefresh={refetch} tintColor={g.colors.primary} />}
           renderItem={({ item }) => <PatrolCard item={item} />}
           ListEmptyComponent={<EmptyState emoji="🚶" title="No patrol logs yet" subtitle="Tap + to log your first patrol." />}
           contentContainerStyle={s.listContent}
@@ -194,34 +194,34 @@ export default function PatrolScreen() {
 }
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: theme.colors.background },
-  countsBar: { flexDirection: "row", backgroundColor: theme.colors.surface, borderBottomWidth: 1, borderBottomColor: theme.colors.border, paddingVertical: 12 },
+  safe: { flex: 1, backgroundColor: g.colors.background },
+  countsBar: { flexDirection: "row", backgroundColor: g.colors.surface, borderBottomWidth: 1, borderBottomColor: g.colors.border, paddingVertical: 12 },
   countItem: { flex: 1, alignItems: "center", gap: 2 },
-  countNum: { fontSize: theme.fontSize.xl, fontWeight: theme.fontWeight.bold },
-  countLabel: { fontSize: theme.fontSize.xs, color: theme.colors.textSecondary },
-  countSep: { width: 1, backgroundColor: theme.colors.border },
-  listContent: { padding: theme.spacing.md, paddingBottom: 90 },
-  card: { backgroundColor: theme.colors.surface, borderRadius: 12, borderWidth: 1, borderColor: theme.colors.border, padding: theme.spacing.md, marginBottom: theme.spacing.sm, ...theme.shadow.sm },
+  countNum: { fontSize: g.fontSize.xl, fontWeight: g.fontWeight.bold },
+  countLabel: { fontSize: g.fontSize.xs, color: g.colors.textSecondary },
+  countSep: { width: 1, backgroundColor: g.colors.border },
+  listContent: { padding: g.spacing.md, paddingBottom: 90 },
+  card: { backgroundColor: g.colors.surface, borderRadius: 12, borderWidth: 1, borderColor: g.colors.border, padding: g.spacing.md, marginBottom: g.spacing.sm, ...g.shadow.sm },
   cardHeader: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 6 },
   statusIcon: { width: 36, height: 36, borderRadius: 10, justifyContent: "center", alignItems: "center" },
-  location: { fontSize: theme.fontSize.md, fontWeight: theme.fontWeight.semibold, color: theme.colors.textPrimary },
-  guardName: { fontSize: theme.fontSize.xs, color: theme.colors.textSecondary },
-  statusChip: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: theme.borderRadius.full, borderWidth: 1 },
+  location: { fontSize: g.fontSize.md, fontWeight: g.fontWeight.semibold, color: g.colors.textPrimary },
+  guardName: { fontSize: g.fontSize.xs, color: g.colors.textSecondary },
+  statusChip: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: g.borderRadius.full, borderWidth: 1 },
   statusText: { fontSize: 11, fontWeight: "700" },
-  notes: { fontSize: theme.fontSize.xs, color: theme.colors.textSecondary, marginBottom: 4 },
-  timeText: { fontSize: 11, color: theme.colors.textDisabled },
-  fab: { position: "absolute", bottom: 28, right: 20, width: 56, height: 56, borderRadius: 28, backgroundColor: theme.colors.primary, justifyContent: "center", alignItems: "center", ...theme.shadow.lg },
+  notes: { fontSize: g.fontSize.xs, color: g.colors.textSecondary, marginBottom: 4 },
+  timeText: { fontSize: 11, color: g.colors.textDisabled },
+  fab: { position: "absolute", bottom: 28, right: 20, width: 56, height: 56, borderRadius: 28, backgroundColor: g.colors.primary, justifyContent: "center", alignItems: "center", ...g.shadow.lg },
   overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "flex-end" },
-  sheet: { backgroundColor: theme.colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: theme.spacing.xl, maxHeight: "90%" },
-  sheetTitle: { fontSize: theme.fontSize.lg, fontWeight: theme.fontWeight.bold, color: theme.colors.textPrimary, marginBottom: theme.spacing.lg },
-  fieldLabel: { fontSize: theme.fontSize.sm, fontWeight: "600", color: theme.colors.textPrimary, marginBottom: 6, marginTop: theme.spacing.md },
-  chip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: theme.borderRadius.full, borderWidth: 1, borderColor: theme.colors.border },
-  chipActive: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
-  chipText: { fontSize: 12, color: theme.colors.textSecondary, fontWeight: "600" },
+  sheet: { backgroundColor: g.colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: g.spacing.xl, maxHeight: "90%" },
+  sheetTitle: { fontSize: g.fontSize.lg, fontWeight: g.fontWeight.bold, color: g.colors.textPrimary, marginBottom: g.spacing.lg },
+  fieldLabel: { fontSize: g.fontSize.sm, fontWeight: "600", color: g.colors.textPrimary, marginBottom: 6, marginTop: g.spacing.md },
+  chip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: g.borderRadius.full, borderWidth: 1, borderColor: g.colors.border },
+  chipActive: { backgroundColor: g.colors.primary, borderColor: g.colors.primary },
+  chipText: { fontSize: 12, color: g.colors.textSecondary, fontWeight: "600" },
   chipTextActive: { color: "#fff" },
-  statusBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, paddingVertical: 8, borderRadius: theme.borderRadius.md, borderWidth: 1, borderColor: theme.colors.border },
+  statusBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, paddingVertical: 8, borderRadius: g.borderRadius.md, borderWidth: 1, borderColor: g.colors.border },
   statusBtnText: { fontSize: 12, fontWeight: "700" },
-  input: { borderWidth: 1, borderColor: theme.colors.border, borderRadius: theme.borderRadius.md, paddingHorizontal: 12, paddingVertical: 10, fontSize: theme.fontSize.sm, color: theme.colors.textPrimary, backgroundColor: theme.colors.background },
-  cancelRow: { marginTop: theme.spacing.md, alignItems: "center", paddingVertical: 8 },
-  cancelText: { fontSize: theme.fontSize.sm, color: theme.colors.textSecondary },
+  input: { borderWidth: 1, borderColor: g.colors.border, borderRadius: g.borderRadius.md, paddingHorizontal: 12, paddingVertical: 10, fontSize: g.fontSize.sm, color: g.colors.textPrimary, backgroundColor: g.colors.background },
+  cancelRow: { marginTop: g.spacing.md, alignItems: "center", paddingVertical: 8 },
+  cancelText: { fontSize: g.fontSize.sm, color: g.colors.textSecondary },
 });

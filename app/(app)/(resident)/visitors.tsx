@@ -1,6 +1,6 @@
 /**
  * Resident Visitors — Phase 09
- * Pre-register visitors + show QR passes
+ * Pre-register visitors + approve pending visitors + show history
  */
 import React, { useState, useCallback } from "react";
 import {
@@ -14,16 +14,20 @@ import {
   ScrollView,
   Platform,
   RefreshControl,
+  ActivityIndicator,
 } from "react-native";
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import QRCode from "react-native-qrcode-svg";
-import AppHeader from "../../../src/components/common/AppHeader";
 import LoadingButton from "../../../src/components/common/LoadingButton";
 import EmptyState from "../../../src/components/common/EmptyState";
 import { SkeletonList } from "../../../src/components/common/SkeletonLoader";
-import { useVisitorPassList, useCreateVisitorPass, useVisitorList } from "../../../src/hooks/useVisitors";
+import {
+  useVisitorPassList, useCreateVisitorPass, useVisitorList,
+  useApproveVisitor, useRejectVisitor,
+} from "../../../src/hooks/useVisitors";
 import { useAuthStore } from "../../../src/store/auth.store";
 import { showToast } from "../../../src/store/ui.store";
 import { theme } from "../../../src/theme";
@@ -32,19 +36,30 @@ import type { VisitorPass } from "../../../src/types";
 
 type Tab = "REGISTER" | "PASSES" | "HISTORY";
 
+/* ─── Pass Card (My Passes tab) ─────────────────────────────────────── */
 function PassCard({ item }: { item: VisitorPass }) {
   const [showQR, setShowQR] = useState(false);
   const isExpired = new Date(item.expires_at) < new Date();
 
+  const initials = (item.visitor_name ?? "?")
+    .split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
+
   return (
     <View style={[s.card, isExpired && s.cardExpired]}>
       <View style={s.cardHeader}>
-        <View>
+        <View style={s.passAvatar}>
+          <Text style={s.passAvatarText}>{initials}</Text>
+        </View>
+        <View style={{ flex: 1 }}>
           <Text style={s.visitorName}>{item.visitor_name}</Text>
           <Text style={s.passTime}>Expected: {formatDateTime(item.expected_at)}</Text>
         </View>
-        <View style={[s.statusChip, { backgroundColor: isExpired ? theme.colors.textDisabled + "20" : theme.colors.success + "20" }]}>
-          <Text style={[s.statusText, { color: isExpired ? theme.colors.textDisabled : theme.colors.success }]}>
+        <View style={[s.statusChip, {
+          backgroundColor: isExpired ? theme.colors.textDisabled + "20" : theme.colors.success + "20",
+        }]}>
+          <Text style={[s.statusText, {
+            color: isExpired ? theme.colors.textDisabled : theme.colors.success,
+          }]}>
             {isExpired ? "Expired" : "Active"}
           </Text>
         </View>
@@ -60,15 +75,27 @@ function PassCard({ item }: { item: VisitorPass }) {
       {/* QR Modal */}
       <Modal visible={showQR} transparent animationType="fade">
         <TouchableOpacity style={s.modalOverlay} activeOpacity={1} onPress={() => setShowQR(false)}>
-          <View style={s.qrModal}>
-            <Text style={s.qrModalTitle}>{item.visitor_name}</Text>
-            <Text style={s.qrModalSubtitle}>Visitor Pass QR Code</Text>
-            <View style={s.qrContainer}>
-              <QRCode value={item.id} size={220} color={theme.colors.textPrimary} />
-            </View>
-            <Text style={s.qrExpiry}>Valid until: {formatDateTime(item.expires_at)}</Text>
-            <TouchableOpacity style={s.closeBtn} onPress={() => setShowQR(false)}>
-              <Text style={s.closeBtnText}>Close</Text>
+          <View style={s.qrModalWrap}>
+            <TouchableOpacity style={s.qrModalClose} onPress={() => setShowQR(false)}>
+              <MaterialIcons name="close" size={20} color={theme.colors.textPrimary} />
+            </TouchableOpacity>
+            <Text style={s.qrModalTitle}>Gate pass</Text>
+            <LinearGradient
+              colors={["#1565C0", "#0D2766"]}
+              style={s.qrGradCard}
+            >
+              <View style={s.qrContainer}>
+                <QRCode value={item.id} size={180} color={theme.colors.primaryDark} backgroundColor="#FFFFFF" />
+              </View>
+              <Text style={s.qrGradName}>{item.visitor_name}</Text>
+              <Text style={s.qrGradHint}>Show this at the gate</Text>
+            </LinearGradient>
+            <TouchableOpacity
+              style={s.preApproveBtn}
+              onPress={() => setShowQR(false)}
+            >
+              <MaterialIcons name="flash-on" size={18} color="#FFFFFF" />
+              <Text style={s.preApproveBtnText}>Pre-approve a visitor</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -77,30 +104,31 @@ function PassCard({ item }: { item: VisitorPass }) {
   );
 }
 
+/* ─── Date helpers ───────────────────────────────────────────────────── */
 function formatDateForDisplay(date: Date | null): string {
   if (!date) return "";
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  const h = String(date.getHours()).padStart(2, "0");
+  const y   = date.getFullYear();
+  const m   = String(date.getMonth() + 1).padStart(2, "0");
+  const d   = String(date.getDate()).padStart(2, "0");
+  const h   = String(date.getHours()).padStart(2, "0");
   const min = String(date.getMinutes()).padStart(2, "0");
   return `${y}-${m}-${d} ${h}:${min}`;
 }
 
 type PickerField = "expectedAt" | "expiresAt";
-type PickerMode = "date" | "time";
+type PickerMode  = "date" | "time";
 
+/* ─── Register Form ──────────────────────────────────────────────────── */
 function RegisterForm() {
   const { user } = useAuthStore();
   const { mutate: createPass, isPending } = useCreateVisitorPass();
 
   const [visitorName, setVisitorName] = useState("");
-  const [expectedAt, setExpectedAt] = useState<Date | null>(null);
-  const [expiresAt, setExpiresAt] = useState<Date | null>(null);
-
+  const [expectedAt,  setExpectedAt]  = useState<Date | null>(null);
+  const [expiresAt,   setExpiresAt]   = useState<Date | null>(null);
   const [pickerField, setPickerField] = useState<PickerField | null>(null);
-  const [pickerMode, setPickerMode] = useState<PickerMode>("date");
-  const [tempDate, setTempDate] = useState(new Date());
+  const [pickerMode,  setPickerMode]  = useState<PickerMode>("date");
+  const [tempDate,    setTempDate]    = useState(new Date());
 
   const openPicker = useCallback((field: PickerField) => {
     const current = field === "expectedAt" ? expectedAt : expiresAt;
@@ -110,59 +138,39 @@ function RegisterForm() {
   }, [expectedAt, expiresAt]);
 
   const onPickerChange = useCallback((_event: DateTimePickerEvent, selectedDate?: Date) => {
-    if (_event.type === "dismissed") {
-      setPickerField(null);
-      return;
-    }
+    if (_event.type === "dismissed") { setPickerField(null); return; }
     if (!selectedDate || !pickerField) return;
-
     if (pickerMode === "date") {
       setTempDate(selectedDate);
-      if (Platform.OS === "android") {
-        setPickerMode("time");
-      } else {
-        const setter = pickerField === "expectedAt" ? setExpectedAt : setExpiresAt;
-        setter(selectedDate);
-      }
+      if (Platform.OS === "android") { setPickerMode("time"); }
+      else { (pickerField === "expectedAt" ? setExpectedAt : setExpiresAt)(selectedDate); }
     } else {
       const combined = new Date(tempDate);
       combined.setHours(selectedDate.getHours(), selectedDate.getMinutes());
-      const setter = pickerField === "expectedAt" ? setExpectedAt : setExpiresAt;
-      setter(combined);
+      (pickerField === "expectedAt" ? setExpectedAt : setExpiresAt)(combined);
       setPickerField(null);
     }
   }, [pickerField, pickerMode, tempDate]);
 
   const handleSubmit = () => {
-    if (!visitorName.trim()) {
-      showToast({ type: "error", message: "Visitor name is required" });
-      return;
-    }
-    if (!expectedAt) {
-      showToast({ type: "error", message: "Expected arrival time is required" });
-      return;
-    }
-    if (!expiresAt) {
-      showToast({ type: "error", message: "Expiry time is required" });
-      return;
-    }
+    if (!visitorName.trim()) { showToast({ type: "error", message: "Visitor name is required" }); return; }
+    if (!expectedAt)          { showToast({ type: "error", message: "Expected arrival time is required" }); return; }
+    if (!expiresAt)           { showToast({ type: "error", message: "Expiry time is required" }); return; }
     if (!user) return;
 
     createPass(
       {
-        tenantId: user.tenantId,
-        unitId: user.unitId ?? user.communityId,
-        residentId: user.id,
+        tenantId:    user.tenantId,
+        unitId:      user.unitId ?? user.communityId,
+        residentId:  user.id,
         visitorName: visitorName.trim(),
-        expectedAt: expectedAt.toISOString(),
-        expiresAt: expiresAt.toISOString(),
+        expectedAt:  expectedAt.toISOString(),
+        expiresAt:   expiresAt.toISOString(),
       },
       {
         onSuccess: () => {
           showToast({ type: "success", message: "Visitor pass created!" });
-          setVisitorName("");
-          setExpectedAt(null);
-          setExpiresAt(null);
+          setVisitorName(""); setExpectedAt(null); setExpiresAt(null);
         },
         onError: () => showToast({ type: "error", message: "Failed to create visitor pass" }),
       }
@@ -173,9 +181,7 @@ function RegisterForm() {
     <ScrollView contentContainerStyle={s.form}>
       <View style={s.formCard}>
         <Text style={s.formTitle}>Register a Visitor</Text>
-        <Text style={s.formSubtitle}>
-          Create a pass so your visitor can enter the community
-        </Text>
+        <Text style={s.formSubtitle}>Create a pass so your visitor can enter the community</Text>
 
         <Text style={s.fieldLabel}>Visitor Name *</Text>
         <TextInput
@@ -219,15 +225,12 @@ function RegisterForm() {
                   mode="datetime"
                   display="spinner"
                   minimumDate={new Date()}
-                  onChange={(_e, d) => {
-                    if (d) setTempDate(d);
-                  }}
+                  onChange={(_e, d) => { if (d) setTempDate(d); }}
                 />
                 <TouchableOpacity
                   style={s.closeBtn}
                   onPress={() => {
-                    const setter = pickerField === "expectedAt" ? setExpectedAt : setExpiresAt;
-                    setter(tempDate);
+                    (pickerField === "expectedAt" ? setExpectedAt : setExpiresAt)(tempDate);
                     setPickerField(null);
                   }}
                 >
@@ -250,37 +253,95 @@ function RegisterForm() {
   );
 }
 
-function VisitorHistoryCard({ item }: { item: any }) {
-  const statusColor: Record<string, string> = {
-    PENDING_APPROVAL: "#F39C12",
-    APPROVED: "#27AE60",
-    CHECKED_IN: "#3498DB",
-    CHECKED_OUT: "#7F8C8D",
-    REJECTED: "#E74C3C",
-  };
-  const color = statusColor[item.status] ?? theme.colors.textSecondary;
+/* ─── Pending Approval Card ──────────────────────────────────────────── */
+function PendingCard({ item }: { item: any }) {
+  const { mutate: approve, isPending: approving } = useApproveVisitor();
+  const { mutate: reject,  isPending: rejecting  } = useRejectVisitor();
+  const initials = (item.visitor_name ?? "?")
+    .split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
+
   return (
-    <View style={s.card}>
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
-        <View style={{ flex: 1 }}>
-          <Text style={s.visitorName}>{item.visitor_name}</Text>
-          {item.visitor_phone ? <Text style={s.passTime}>{item.visitor_phone}</Text> : null}
-        </View>
-        <View style={[s.statusChip, { backgroundColor: color + "20" }]}>
-          <Text style={[s.statusText, { color }]}>{item.status?.replace(/_/g, " ")}</Text>
-        </View>
+    <View style={s.pendingCard}>
+      <View style={[s.historyAvatar, { backgroundColor: theme.colors.primaryLight + "33" }]}>
+        <Text style={[s.historyAvatarText, { color: theme.colors.primary }]}>{initials}</Text>
       </View>
-      <Text style={s.expiry}>Type: {item.visitor_type}  •  {formatRelative(item.created_at)}</Text>
-      {item.entry_at && <Text style={[s.expiry, { color: "#27AE60" }]}>Entry: {formatDateTime(item.entry_at)}</Text>}
-      {item.exit_at  && <Text style={[s.expiry, { color: "#7F8C8D" }]}>Exit: {formatDateTime(item.exit_at)}</Text>}
+      <View style={{ flex: 1 }}>
+        <Text style={s.visitorName}>{item.visitor_name}</Text>
+        <Text style={s.passTime}>{item.visitor_type ?? "Guest"} · {formatRelative(item.created_at)}</Text>
+      </View>
+      <TouchableOpacity
+        style={s.okBtn}
+        disabled={approving || rejecting}
+        onPress={() => approve({ id: item.id }, {
+          onSuccess: () => showToast({ type: "success", message: "Visitor approved" }),
+          onError:   () => showToast({ type: "error",   message: "Failed to approve" }),
+        })}
+      >
+        {approving
+          ? <ActivityIndicator size={12} color="#fff" />
+          : <Text style={s.okBtnText}>OK</Text>}
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={s.denyCardBtn}
+        disabled={approving || rejecting}
+        onPress={() => reject({ id: item.id, reason: "Denied by resident" }, {
+          onSuccess: () => showToast({ type: "success", message: "Visitor denied" }),
+          onError:   () => showToast({ type: "error",   message: "Failed to deny" }),
+        })}
+      >
+        <Text style={s.denyCardBtnText}>Deny</Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
+/* ─── History Card ───────────────────────────────────────────────────── */
+function HistoryCard({ item }: { item: any }) {
+  const statusColor: Record<string, string> = {
+    PENDING_APPROVAL: "#FB8C00",
+    APPROVED:         "#43A047",
+    CHECKED_IN:       "#1E88E5",
+    CHECKED_OUT:      "#78909C",
+    REJECTED:         "#E53935",
+  };
+  const color    = statusColor[item.status] ?? theme.colors.textSecondary;
+  const initials = (item.visitor_name ?? "?")
+    .split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
+  const isOk = ["APPROVED", "CHECKED_IN", "CHECKED_OUT"].includes(item.status);
+
+  return (
+    <View style={s.historyCard}>
+      <View style={[s.historyAvatar, { backgroundColor: color + "22" }]}>
+        <Text style={[s.historyAvatarText, { color }]}>{initials}</Text>
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={s.visitorName}>{item.visitor_name}</Text>
+        <Text style={s.passTime}>{item.visitor_type ?? "Guest"} · {formatRelative(item.created_at)}</Text>
+      </View>
+      <View style={[s.historyStatusDot, { backgroundColor: color + "22" }]}>
+        <MaterialIcons
+          name={isOk ? "check-circle" : "cancel"}
+          size={22}
+          color={color}
+        />
+      </View>
+    </View>
+  );
+}
+
+/* ─── Main Screen ────────────────────────────────────────────────────── */
 export default function ResidentVisitorsScreen() {
   const [activeTab, setActiveTab] = useState<Tab>("REGISTER");
-  const { data: passes = [], isLoading: passesLoading } = useVisitorPassList();
+
+  const { data: passes  = [], isLoading: passesLoading  } = useVisitorPassList();
   const { data: history = [], isLoading: historyLoading, refetch: refetchHistory } = useVisitorList(undefined);
+
+  const pendingVisitors = history.filter((v: any) => v.status === "PENDING_APPROVAL");
+  const todayVisitors   = history.filter((v: any) => {
+    const d = new Date(v.created_at);
+    const now = new Date();
+    return d.toDateString() === now.toDateString() && v.status !== "PENDING_APPROVAL";
+  });
 
   const TABS: { key: Tab; label: string }[] = [
     { key: "REGISTER", label: "Pre-register" },
@@ -288,10 +349,38 @@ export default function ResidentVisitorsScreen() {
     { key: "HISTORY",  label: "History"      },
   ];
 
+  const totalCount   = history.length;
+  const pendingCount = pendingVisitors.length;
+
   return (
     <SafeAreaView style={s.safe} edges={["top"]}>
-      <AppHeader title="Visitors" />
+      {/* Header */}
+      <LinearGradient
+        colors={["#0D2766", "#1565C0"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={s.header}
+      >
+        <Text style={s.headerTitle}>Visitors</Text>
+        <View style={s.statsRow}>
+          <View style={s.statItem}>
+            <Text style={s.statNum}>{totalCount}</Text>
+            <Text style={s.statLabel}>Total</Text>
+          </View>
+          <View style={s.statDivider} />
+          <View style={s.statItem}>
+            <Text style={s.statNum}>{pendingCount}</Text>
+            <Text style={s.statLabel}>Pending</Text>
+          </View>
+          <View style={s.statDivider} />
+          <View style={s.statItem}>
+            <Text style={s.statNum}>{passes.length}</Text>
+            <Text style={s.statLabel}>Passes</Text>
+          </View>
+        </View>
+      </LinearGradient>
 
+      {/* Tab Row */}
       <View style={s.tabRow}>
         {TABS.map(({ key, label }) => {
           const active = activeTab === key;
@@ -307,12 +396,11 @@ export default function ResidentVisitorsScreen() {
         })}
       </View>
 
+      {/* Content */}
       {activeTab === "REGISTER" ? (
         <RegisterForm />
       ) : activeTab === "PASSES" ? (
-        passesLoading ? (
-          <SkeletonList count={3} />
-        ) : (
+        passesLoading ? <SkeletonList count={3} /> : (
           <FlatList
             data={passes}
             keyExtractor={(item) => item.id}
@@ -332,23 +420,49 @@ export default function ResidentVisitorsScreen() {
       ) : historyLoading ? (
         <SkeletonList count={4} />
       ) : (
-        <FlatList
-          data={[...history].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <VisitorHistoryCard item={item} />}
-          refreshControl={<RefreshControl refreshing={false} onRefresh={refetchHistory} tintColor={theme.colors.primary} />}
-          ListEmptyComponent={
-            <EmptyState emoji="📋" title="No visitor history" subtitle="Your visitor activity will appear here." />
-          }
+        <ScrollView
           contentContainerStyle={s.listContent}
-        />
+          refreshControl={<RefreshControl refreshing={false} onRefresh={refetchHistory} tintColor={theme.colors.primary} />}
+        >
+          {/* Pending Approvals */}
+          {pendingVisitors.length > 0 && (
+            <>
+              <Text style={s.sectionLabel}>Pending approval</Text>
+              {pendingVisitors.map((v: any) => <PendingCard key={v.id} item={v} />)}
+            </>
+          )}
+
+          {/* Today */}
+          {todayVisitors.length > 0 && (
+            <>
+              <Text style={[s.sectionLabel, { marginTop: 16 }]}>Today</Text>
+              {todayVisitors.map((v: any) => <HistoryCard key={v.id} item={v} />)}
+            </>
+          )}
+
+          {pendingVisitors.length === 0 && todayVisitors.length === 0 && (
+            <EmptyState emoji="📋" title="No visitor history" subtitle="Your visitor activity will appear here." />
+          )}
+        </ScrollView>
       )}
     </SafeAreaView>
   );
 }
 
+/* ─── Styles ─────────────────────────────────────────────────────────── */
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: theme.colors.background },
+
+  /* Header */
+  header: { paddingHorizontal: 20, paddingTop: 18, paddingBottom: 20 },
+  headerTitle: { fontSize: 22, fontWeight: "700", color: "#FFFFFF", marginBottom: 14 },
+  statsRow:    { flexDirection: "row", alignItems: "center" },
+  statItem:    { alignItems: "center", flex: 1 },
+  statNum:     { fontSize: 24, fontWeight: "700", color: "#FFFFFF" },
+  statLabel:   { fontSize: 11, color: "rgba(255,255,255,0.75)", marginTop: 2 },
+  statDivider: { width: 1, height: 32, backgroundColor: "rgba(255,255,255,0.3)" },
+
+  /* Tabs */
   tabRow: {
     flexDirection: "row",
     backgroundColor: theme.colors.surface,
@@ -356,92 +470,128 @@ const s = StyleSheet.create({
     borderBottomColor: theme.colors.border,
   },
   tab: {
-    flex: 1,
-    paddingVertical: 14,
-    alignItems: "center",
-    borderBottomWidth: 2,
-    borderBottomColor: "transparent",
+    flex: 1, paddingVertical: 14, alignItems: "center",
+    borderBottomWidth: 2, borderBottomColor: "transparent",
   },
-  tabActive: { borderBottomColor: theme.colors.primary },
-  tabText: { fontSize: theme.fontSize.sm, fontWeight: theme.fontWeight.medium, color: theme.colors.textSecondary },
-  tabTextActive: { color: theme.colors.primary, fontWeight: theme.fontWeight.semibold },
+  tabActive:     { borderBottomColor: theme.colors.primary },
+  tabText:       { fontSize: 13, fontWeight: "500", color: theme.colors.textSecondary },
+  tabTextActive: { color: theme.colors.primary, fontWeight: "700" },
+
+  /* Lists */
   listContent: { padding: theme.spacing.md, paddingBottom: theme.spacing.xxl },
-  form: { padding: theme.spacing.md, paddingBottom: theme.spacing.xxl },
-  formCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    padding: theme.spacing.lg,
+  sectionLabel: { fontSize: 13, fontWeight: "700", color: theme.colors.textSecondary, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 },
+
+  /* Pending card */
+  pendingCard: {
+    backgroundColor: theme.colors.surface, borderRadius: 14,
+    padding: 14, marginBottom: 10,
+    flexDirection: "row", alignItems: "center", gap: 10,
+    borderWidth: 1, borderColor: theme.colors.border,
     ...theme.shadow.sm,
   },
-  formTitle: { fontSize: theme.fontSize.lg, fontWeight: theme.fontWeight.bold, color: theme.colors.textPrimary, marginBottom: 4 },
-  formSubtitle: { fontSize: theme.fontSize.sm, color: theme.colors.textSecondary, marginBottom: theme.spacing.lg },
-  fieldLabel: { fontSize: theme.fontSize.sm, fontWeight: theme.fontWeight.semibold, color: theme.colors.textPrimary, marginBottom: 6 },
-  fieldHint: { fontSize: theme.fontSize.xs, color: theme.colors.textDisabled, marginTop: 3, marginBottom: theme.spacing.md },
-  input: {
-    height: 48,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.md,
-    paddingHorizontal: 12,
-    fontSize: theme.fontSize.sm,
-    color: theme.colors.textPrimary,
-    backgroundColor: theme.colors.background,
+  okBtn: {
+    backgroundColor: theme.colors.primaryDark,
+    paddingHorizontal: 16, paddingVertical: 8,
+    borderRadius: 8, alignItems: "center", minWidth: 52,
   },
+  okBtnText:      { fontSize: 13, fontWeight: "700", color: "#FFFFFF" },
+  denyCardBtn: {
+    backgroundColor: "#E3F2FD",
+    paddingHorizontal: 12, paddingVertical: 8,
+    borderRadius: 8, alignItems: "center", minWidth: 48,
+    borderWidth: 1, borderColor: theme.colors.border,
+  },
+  denyCardBtnText: { fontSize: 13, fontWeight: "600", color: theme.colors.textSecondary },
+
+  /* History card */
+  historyCard: {
+    backgroundColor: theme.colors.surface, borderRadius: 14,
+    padding: 14, marginBottom: 10,
+    flexDirection: "row", alignItems: "center", gap: 12,
+    borderWidth: 1, borderColor: theme.colors.border,
+    ...theme.shadow.sm,
+  },
+  historyAvatar:     { width: 42, height: 42, borderRadius: 21, justifyContent: "center", alignItems: "center" },
+  historyAvatarText: { fontSize: 15, fontWeight: "700" },
+  historyStatusDot:  { width: 36, height: 36, borderRadius: 18, justifyContent: "center", alignItems: "center" },
+
+  /* Pass Card */
   card: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    padding: theme.spacing.md,
-    marginBottom: theme.spacing.md,
+    backgroundColor: theme.colors.surface, borderRadius: 14,
+    borderWidth: 1, borderColor: theme.colors.border,
+    padding: theme.spacing.md, marginBottom: theme.spacing.md,
     ...theme.shadow.sm,
   },
   cardExpired: { opacity: 0.6 },
-  cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 },
-  visitorName: { fontSize: theme.fontSize.md, fontWeight: theme.fontWeight.semibold, color: theme.colors.textPrimary },
-  passTime: { fontSize: theme.fontSize.xs, color: theme.colors.textSecondary, marginTop: 2 },
-  statusChip: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: theme.borderRadius.full },
-  statusText: { fontSize: 11, fontWeight: theme.fontWeight.semibold },
-  expiry: { fontSize: theme.fontSize.xs, color: theme.colors.textSecondary, marginBottom: theme.spacing.sm },
+  cardHeader:  { flexDirection: "row", alignItems: "flex-start", gap: 12, marginBottom: 8 },
+  passAvatar: {
+    width: 42, height: 42, borderRadius: 21,
+    backgroundColor: theme.colors.primary + "22",
+    justifyContent: "center", alignItems: "center",
+  },
+  passAvatarText: { fontSize: 15, fontWeight: "700", color: theme.colors.primary },
+  visitorName:    { fontSize: 15, fontWeight: "600", color: theme.colors.textPrimary },
+  passTime:       { fontSize: 12, color: theme.colors.textSecondary, marginTop: 2 },
+  statusChip:     { paddingHorizontal: 9, paddingVertical: 3, borderRadius: theme.borderRadius.full },
+  statusText:     { fontSize: 11, fontWeight: "600" },
+  expiry:         { fontSize: 12, color: theme.colors.textSecondary, marginBottom: 8 },
   qrBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: theme.borderRadius.md,
-    backgroundColor: theme.colors.primary + "15",
+    flexDirection: "row", alignItems: "center", gap: 6,
+    paddingVertical: 8, paddingHorizontal: 14,
+    borderRadius: 10, backgroundColor: theme.colors.primary + "15",
     alignSelf: "flex-start",
   },
-  qrBtnText: { fontSize: theme.fontSize.sm, fontWeight: theme.fontWeight.semibold, color: theme.colors.primary },
-  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.55)", justifyContent: "center", alignItems: "center" },
-  qrModal: {
+  qrBtnText: { fontSize: 13, fontWeight: "600", color: theme.colors.primary },
+
+  /* QR Modal */
+  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "center", alignItems: "center" },
+  qrModalWrap: {
     backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.xl,
-    padding: theme.spacing.xl,
-    alignItems: "center",
-    width: "80%",
+    borderRadius: 24, padding: 24,
+    width: "88%", alignItems: "center",
     ...theme.shadow.lg,
   },
-  qrModalTitle: { fontSize: theme.fontSize.lg, fontWeight: theme.fontWeight.bold, color: theme.colors.textPrimary, marginBottom: 4 },
-  qrModalSubtitle: { fontSize: theme.fontSize.sm, color: theme.colors.textSecondary, marginBottom: theme.spacing.lg },
+  qrModalClose: {
+    position: "absolute", top: 14, right: 14,
+    width: 32, height: 32, borderRadius: 16,
+    backgroundColor: theme.colors.background,
+    justifyContent: "center", alignItems: "center",
+  },
+  qrModalTitle:  { fontSize: 13, fontWeight: "600", color: theme.colors.textSecondary, marginBottom: 16 },
+  qrGradCard:    { borderRadius: 18, padding: 20, alignItems: "center", width: "100%", marginBottom: 16 },
+  qrContainer:   { backgroundColor: "#FFFFFF", borderRadius: 14, padding: 14, marginBottom: 14 },
+  qrGradName:    { fontSize: 18, fontWeight: "700", color: "#FFFFFF" },
+  qrGradHint:    { fontSize: 13, color: "rgba(255,255,255,0.75)", marginTop: 4 },
+  preApproveBtn: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center",
+    gap: 8, backgroundColor: theme.colors.primaryDark,
+    borderRadius: 12, paddingVertical: 14, width: "100%",
+  },
+  preApproveBtnText: { fontSize: 15, fontWeight: "700", color: "#FFFFFF" },
+
+  /* Form */
+  form:        { padding: theme.spacing.md, paddingBottom: theme.spacing.xxl },
+  formCard: {
+    backgroundColor: theme.colors.surface, borderRadius: 16,
+    borderWidth: 1, borderColor: theme.colors.border,
+    padding: theme.spacing.lg, ...theme.shadow.sm,
+  },
+  formTitle:    { fontSize: 17, fontWeight: "700", color: theme.colors.textPrimary, marginBottom: 4 },
+  formSubtitle: { fontSize: 13, color: theme.colors.textSecondary, marginBottom: theme.spacing.lg },
+  fieldLabel:   { fontSize: 13, fontWeight: "600", color: theme.colors.textPrimary, marginBottom: 6 },
+  input: {
+    height: 48, borderWidth: 1.5, borderColor: theme.colors.border,
+    borderRadius: 10, paddingHorizontal: 14, fontSize: 14,
+    color: theme.colors.textPrimary, backgroundColor: theme.colors.background,
+    marginBottom: 14,
+  },
+
+  /* Picker */
   pickerModal: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.xl,
-    padding: theme.spacing.lg,
-    width: "85%",
-    alignItems: "center",
-    ...theme.shadow.lg,
+    backgroundColor: theme.colors.surface, borderRadius: 20,
+    padding: theme.spacing.lg, width: "85%",
+    alignItems: "center", ...theme.shadow.lg,
   },
-  qrContainer: { padding: 16, backgroundColor: "#FFFFFF", borderRadius: 12, borderWidth: 1, borderColor: theme.colors.border },
-  qrExpiry: { fontSize: theme.fontSize.xs, color: theme.colors.textSecondary, marginTop: theme.spacing.md, marginBottom: theme.spacing.md },
-  closeBtn: {
-    paddingVertical: 12,
-    paddingHorizontal: 40,
-    borderRadius: theme.borderRadius.md,
-    backgroundColor: theme.colors.primary,
-  },
-  closeBtnText: { fontSize: theme.fontSize.sm, fontWeight: theme.fontWeight.semibold, color: "#FFFFFF" },
+  closeBtn:     { paddingVertical: 12, paddingHorizontal: 40, borderRadius: 10, backgroundColor: theme.colors.primary },
+  closeBtnText: { fontSize: 14, fontWeight: "700", color: "#FFFFFF" },
 });

@@ -24,7 +24,7 @@ import StatusBadge from "../../../src/components/common/StatusBadge";
 import { useVisitorList, useCreateVisitor, useCheckinVisitor, useCheckoutVisitor } from "../../../src/hooks/useVisitors";
 import { useAuthStore } from "../../../src/store/auth.store";
 import { showToast } from "../../../src/store/ui.store";
-import { theme } from "../../../src/theme";
+import { guardTheme as g } from "../../../src/theme/guardTheme";
 import { formatRelative } from "../../../src/utils/format";
 import type { Visitor } from "../../../src/types";
 
@@ -57,7 +57,7 @@ function ParcelCard({ item }: { item: Visitor }) {
       </View>
 
       <View style={s.metaRow}>
-        <MaterialIcons name="access-time" size={12} color={theme.colors.textSecondary} />
+        <MaterialIcons name="access-time" size={12} color={g.colors.textSecondary} />
         <Text style={s.timeText}>Arrived {formatRelative(item.created_at)}</Text>
       </View>
 
@@ -67,8 +67,8 @@ function ParcelCard({ item }: { item: Visitor }) {
           onPress={() => checkin({ id: item.id }, { onSuccess: () => showToast({ type: "success", message: "Parcel marked at gate" }) })}
           disabled={busy}
         >
-          <MaterialIcons name="move-to-inbox" size={16} color={theme.colors.primary} />
-          <Text style={[s.actionText, { color: theme.colors.primary }]}>Mark at Gate</Text>
+          <MaterialIcons name="move-to-inbox" size={16} color={g.colors.primary} />
+          <Text style={[s.actionText, { color: g.colors.primary }]}>Mark at Gate</Text>
         </TouchableOpacity>
       )}
 
@@ -78,14 +78,14 @@ function ParcelCard({ item }: { item: Visitor }) {
           onPress={() => checkout({ id: item.id }, { onSuccess: () => showToast({ type: "success", message: "Parcel collected ✓" }) })}
           disabled={busy}
         >
-          <MaterialIcons name="check-circle" size={16} color={theme.colors.success} />
-          <Text style={[s.actionText, { color: theme.colors.success }]}>Mark Collected</Text>
+          <MaterialIcons name="check-circle" size={16} color={g.colors.success} />
+          <Text style={[s.actionText, { color: g.colors.success }]}>Mark Collected</Text>
         </TouchableOpacity>
       )}
 
       {isCollected && (
         <View style={s.collectedRow}>
-          <MaterialIcons name="check-circle" size={14} color={theme.colors.success} />
+          <MaterialIcons name="check-circle" size={14} color={g.colors.success} />
           <Text style={s.collectedText}>Collected by resident</Text>
         </View>
       )}
@@ -152,7 +152,7 @@ function AddParcelModal({ visible, onClose }: { visible: boolean; onClose: () =>
               value={customPartner}
               onChangeText={setCustomPartner}
               placeholder="Enter partner name"
-              placeholderTextColor={theme.colors.textDisabled}
+              placeholderTextColor={g.colors.textDisabled}
             />
           )}
 
@@ -162,10 +162,10 @@ function AddParcelModal({ visible, onClose }: { visible: boolean; onClose: () =>
             value={recipient}
             onChangeText={setRecipient}
             placeholder="e.g. Rahul Kumar / A-101"
-            placeholderTextColor={theme.colors.textDisabled}
+            placeholderTextColor={g.colors.textDisabled}
           />
 
-          <LoadingButton title="Log Parcel" loadingTitle="Logging…" onPress={handleAdd} isLoading={isPending} style={{ marginTop: theme.spacing.lg }} />
+          <LoadingButton title="Log Parcel" loadingTitle="Logging…" onPress={handleAdd} isLoading={isPending} style={{ marginTop: g.spacing.lg }} />
           <TouchableOpacity style={s.cancelRow} onPress={onClose}>
             <Text style={s.cancelText}>Cancel</Text>
           </TouchableOpacity>
@@ -189,21 +189,21 @@ export default function ParcelsScreen() {
 
   return (
     <SafeAreaView style={s.safe} edges={["top"]}>
-      <AppHeader title="Parcels" />
+      <AppHeader title="Parcels" gradientColors={["#49225B", "#6E3482", "#7B3F9A"]} />
 
       <View style={s.summaryBar}>
         <View style={s.summaryItem}>
-          <Text style={[s.summaryNum, { color: theme.colors.warning }]}>{waiting}</Text>
+          <Text style={[s.summaryNum, { color: g.colors.warning }]}>{waiting}</Text>
           <Text style={s.summaryLabel}>Waiting</Text>
         </View>
         <View style={s.summarySep} />
         <View style={s.summaryItem}>
-          <Text style={[s.summaryNum, { color: theme.colors.success }]}>{collected}</Text>
+          <Text style={[s.summaryNum, { color: g.colors.success }]}>{collected}</Text>
           <Text style={s.summaryLabel}>Collected</Text>
         </View>
         <View style={s.summarySep} />
         <View style={s.summaryItem}>
-          <Text style={[s.summaryNum, { color: theme.colors.textPrimary }]}>{parcels.length}</Text>
+          <Text style={[s.summaryNum, { color: g.colors.textPrimary }]}>{parcels.length}</Text>
           <Text style={s.summaryLabel}>Total</Text>
         </View>
       </View>
@@ -214,7 +214,7 @@ export default function ParcelsScreen() {
         <FlatList
           data={parcels}
           keyExtractor={(item) => item.id}
-          refreshControl={<RefreshControl refreshing={false} onRefresh={refetch} tintColor={theme.colors.primary} />}
+          refreshControl={<RefreshControl refreshing={false} onRefresh={refetch} tintColor={g.colors.primary} />}
           renderItem={({ item }) => <ParcelCard item={item} />}
           ListEmptyComponent={
             <EmptyState emoji="📦" title="No parcels today" subtitle="Tap + to log a new delivery." />
@@ -233,38 +233,38 @@ export default function ParcelsScreen() {
 }
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: theme.colors.background },
-  summaryBar: { flexDirection: "row", backgroundColor: theme.colors.surface, borderBottomWidth: 1, borderBottomColor: theme.colors.border, paddingVertical: 12 },
+  safe: { flex: 1, backgroundColor: g.colors.background },
+  summaryBar: { flexDirection: "row", backgroundColor: g.colors.surface, borderBottomWidth: 1, borderBottomColor: g.colors.border, paddingVertical: 12 },
   summaryItem: { flex: 1, alignItems: "center", gap: 2 },
-  summaryNum: { fontSize: theme.fontSize.xl, fontWeight: theme.fontWeight.bold },
-  summaryLabel: { fontSize: theme.fontSize.xs, color: theme.colors.textSecondary },
-  summarySep: { width: 1, backgroundColor: theme.colors.border },
-  listContent: { padding: theme.spacing.md, paddingBottom: 90 },
-  card: { backgroundColor: theme.colors.surface, borderRadius: 12, borderWidth: 1, borderColor: theme.colors.border, padding: theme.spacing.md, marginBottom: theme.spacing.sm, ...theme.shadow.sm },
-  cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: theme.spacing.sm },
+  summaryNum: { fontSize: g.fontSize.xl, fontWeight: g.fontWeight.bold },
+  summaryLabel: { fontSize: g.fontSize.xs, color: g.colors.textSecondary },
+  summarySep: { width: 1, backgroundColor: g.colors.border },
+  listContent: { padding: g.spacing.md, paddingBottom: 90 },
+  card: { backgroundColor: g.colors.surface, borderRadius: 12, borderWidth: 1, borderColor: g.colors.border, padding: g.spacing.md, marginBottom: g.spacing.sm, ...g.shadow.sm },
+  cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: g.spacing.sm },
   nameRow: { flexDirection: "row", alignItems: "center", gap: 10, flex: 1 },
   parcelIcon: { width: 38, height: 38, borderRadius: 10, justifyContent: "center", alignItems: "center" },
-  parcelName: { fontSize: theme.fontSize.md, fontWeight: theme.fontWeight.semibold, color: theme.colors.textPrimary },
-  parcelPhone: { fontSize: theme.fontSize.xs, color: theme.colors.textSecondary, marginTop: 2 },
-  metaRow: { flexDirection: "row", alignItems: "center", gap: 4, marginBottom: theme.spacing.sm },
-  timeText: { fontSize: theme.fontSize.xs, color: theme.colors.textSecondary },
-  actionBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 10, borderRadius: theme.borderRadius.md, borderWidth: 1 },
-  inBtn: { borderColor: theme.colors.primary + "55", backgroundColor: theme.colors.primary + "10" },
-  outBtn: { borderColor: theme.colors.success + "55", backgroundColor: theme.colors.success + "10" },
-  actionText: { fontSize: theme.fontSize.sm, fontWeight: theme.fontWeight.semibold },
+  parcelName: { fontSize: g.fontSize.md, fontWeight: g.fontWeight.semibold, color: g.colors.textPrimary },
+  parcelPhone: { fontSize: g.fontSize.xs, color: g.colors.textSecondary, marginTop: 2 },
+  metaRow: { flexDirection: "row", alignItems: "center", gap: 4, marginBottom: g.spacing.sm },
+  timeText: { fontSize: g.fontSize.xs, color: g.colors.textSecondary },
+  actionBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 10, borderRadius: g.borderRadius.md, borderWidth: 1 },
+  inBtn: { borderColor: g.colors.primary + "55", backgroundColor: g.colors.primary + "10" },
+  outBtn: { borderColor: g.colors.success + "55", backgroundColor: g.colors.success + "10" },
+  actionText: { fontSize: g.fontSize.sm, fontWeight: g.fontWeight.semibold },
   collectedRow: { flexDirection: "row", alignItems: "center", gap: 5 },
-  collectedText: { fontSize: theme.fontSize.xs, color: theme.colors.success },
-  fab: { position: "absolute", bottom: 28, right: 20, width: 56, height: 56, borderRadius: 28, backgroundColor: "#F39C12", justifyContent: "center", alignItems: "center", ...theme.shadow.lg },
+  collectedText: { fontSize: g.fontSize.xs, color: g.colors.success },
+  fab: { position: "absolute", bottom: 28, right: 20, width: 56, height: 56, borderRadius: 28, backgroundColor: "#F39C12", justifyContent: "center", alignItems: "center", ...g.shadow.lg },
   overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "flex-end" },
-  sheet: { backgroundColor: theme.colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: theme.spacing.xl },
-  sheetTitle: { fontSize: theme.fontSize.lg, fontWeight: theme.fontWeight.bold, color: theme.colors.textPrimary, marginBottom: theme.spacing.lg },
-  fieldLabel: { fontSize: theme.fontSize.sm, fontWeight: theme.fontWeight.semibold, color: theme.colors.textPrimary, marginBottom: 8, marginTop: theme.spacing.md },
+  sheet: { backgroundColor: g.colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: g.spacing.xl },
+  sheetTitle: { fontSize: g.fontSize.lg, fontWeight: g.fontWeight.bold, color: g.colors.textPrimary, marginBottom: g.spacing.lg },
+  fieldLabel: { fontSize: g.fontSize.sm, fontWeight: g.fontWeight.semibold, color: g.colors.textPrimary, marginBottom: 8, marginTop: g.spacing.md },
   partnerGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  partnerChip: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: theme.borderRadius.full, borderWidth: 1, borderColor: theme.colors.border, backgroundColor: theme.colors.surface },
+  partnerChip: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: g.borderRadius.full, borderWidth: 1, borderColor: g.colors.border, backgroundColor: g.colors.surface },
   partnerChipActive: { backgroundColor: "#F39C12", borderColor: "#F39C12" },
-  partnerText: { fontSize: theme.fontSize.xs, fontWeight: "600", color: theme.colors.textSecondary },
+  partnerText: { fontSize: g.fontSize.xs, fontWeight: "600", color: g.colors.textSecondary },
   partnerTextActive: { color: "#FFFFFF" },
-  input: { height: 48, borderWidth: 1, borderColor: theme.colors.border, borderRadius: theme.borderRadius.md, paddingHorizontal: 12, fontSize: theme.fontSize.sm, color: theme.colors.textPrimary, backgroundColor: theme.colors.background },
-  cancelRow: { marginTop: theme.spacing.md, alignItems: "center", paddingVertical: 8 },
-  cancelText: { fontSize: theme.fontSize.sm, color: theme.colors.textSecondary },
+  input: { height: 48, borderWidth: 1, borderColor: g.colors.border, borderRadius: g.borderRadius.md, paddingHorizontal: 12, fontSize: g.fontSize.sm, color: g.colors.textPrimary, backgroundColor: g.colors.background },
+  cancelRow: { marginTop: g.spacing.md, alignItems: "center", paddingVertical: 8 },
+  cancelText: { fontSize: g.fontSize.sm, color: g.colors.textSecondary },
 });
