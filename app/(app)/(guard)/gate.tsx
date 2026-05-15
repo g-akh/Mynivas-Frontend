@@ -18,7 +18,7 @@ import LoadingButton from "../../../src/components/common/LoadingButton";
 import { SkeletonList } from "../../../src/components/common/SkeletonLoader";
 import {
   useVisitorList, useApproveVisitor, useRejectVisitor,
-  useCheckoutVisitor, useCreateVisitor,
+  useCheckinVisitor, useCheckoutVisitor, useCreateVisitor,
 } from "../../../src/hooks/useVisitors";
 import { useAuthStore } from "../../../src/store/auth.store";
 import { showToast } from "../../../src/store/ui.store";
@@ -61,8 +61,15 @@ function NewEntryModal({ visible, onClose }: { visible: boolean; onClose: () => 
     if (!name.trim()) { showToast({ type: "error", message: "Visitor name is required" }); return; }
     if (!user) return;
     createVisitor(
-      { tenantId: user.tenantId, communityId: user.communityId, unitId: user.communityId,
-        visitorName: name.trim(), visitorPhone: phone.trim() || "0000000000", visitorType: selectedType },
+      {
+        tenantId:     user.tenantId,
+        communityId:  user.communityId,
+        unitId:       user.communityId,
+        visitorName:  name.trim(),
+        visitorPhone: phone.trim() || "0000000000",
+        visitorType:  selectedType,
+        unitNumber:   unitNumber.trim() || undefined,
+      },
       {
         onSuccess: () => { showToast({ type: "success", message: "Entry logged — waiting for resident approval" }); handleClose(); },
         onError:   () =>   showToast({ type: "error",   message: "Failed to log entry" }),
@@ -149,11 +156,12 @@ function NewEntryModal({ visible, onClose }: { visible: boolean; onClose: () => 
 }
 
 /* ─── Visitor Gate Card ──────────────────────────────────────────────── */
-function VisitorGateCard({ item, section }: { item: Visitor; section: "pending" | "checked_in" }) {
+function VisitorGateCard({ item, section }: { item: Visitor; section: "pending" | "approved" | "checked_in" }) {
   const { mutate: approve,  isPending: approving   } = useApproveVisitor();
   const { mutate: reject,   isPending: rejecting    } = useRejectVisitor();
+  const { mutate: checkin,  isPending: checkingIn   } = useCheckinVisitor();
   const { mutate: checkout, isPending: checkingOut  } = useCheckoutVisitor();
-  const busy      = approving || rejecting || checkingOut;
+  const busy      = approving || rejecting || checkingIn || checkingOut;
   const typeColor = VISITOR_TYPE_COLOR[item.visitor_type] ?? g.colors.primary;
 
   const initials = (item.visitor_name ?? "?")
@@ -223,6 +231,20 @@ function VisitorGateCard({ item, section }: { item: Visitor; section: "pending" 
         </View>
       )}
 
+      {section === "approved" && (
+        <TouchableOpacity
+          style={[s.actionBtn, s.approveBtn]}
+          onPress={() => checkin({ id: item.id }, {
+            onSuccess: () => showToast({ type: "success", message: "Visitor checked in" }),
+          })}
+          disabled={busy}
+        >
+          {checkingIn
+            ? <ActivityIndicator size={14} color="#FFFFFF" />
+            : <><MaterialIcons name="login" size={16} color="#FFFFFF" /><Text style={[s.actionBtnText, { color: "#FFFFFF" }]}>Check In</Text></>}
+        </TouchableOpacity>
+      )}
+
       {section === "checked_in" && (
         <TouchableOpacity
           style={[s.actionBtn, s.checkOutBtn]}
@@ -243,6 +265,7 @@ export default function GuardGateScreen() {
   const [showNewEntry, setShowNewEntry] = useState(false);
 
   const pendingQuery   = useVisitorList("PENDING_APPROVAL");
+  const approvedQuery  = useVisitorList("APPROVED");
   const checkedInQuery = useVisitorList("CHECKED_IN");
 
   useEffect(() => {
@@ -250,16 +273,18 @@ export default function GuardGateScreen() {
     return () => clearInterval(interval);
   }, [qc]);
 
-  const isLoading         = pendingQuery.isLoading || checkedInQuery.isLoading;
+  const isLoading         = pendingQuery.isLoading || approvedQuery.isLoading || checkedInQuery.isLoading;
   const pendingVisitors   = pendingQuery.data   ?? [];
+  const approvedVisitors  = approvedQuery.data  ?? [];
   const checkedInVisitors = checkedInQuery.data ?? [];
 
   const sections = [
-    { title: "Pending Approval", key: "pending"    as const, data: pendingVisitors   },
-    { title: "Checked In",       key: "checked_in" as const, data: checkedInVisitors },
+    { title: "Pending Approval",        key: "pending"    as const, data: pendingVisitors   },
+    { title: "Pre-Approved — Check In", key: "approved"   as const, data: approvedVisitors  },
+    { title: "Checked In",              key: "checked_in" as const, data: checkedInVisitors },
   ].filter((sec) => sec.data.length > 0 || sec.key === "pending");
 
-  const handleRefresh = () => { pendingQuery.refetch(); checkedInQuery.refetch(); };
+  const handleRefresh = () => { pendingQuery.refetch(); approvedQuery.refetch(); checkedInQuery.refetch(); };
 
   return (
     <SafeAreaView style={s.safe} edges={["top"]}>
@@ -285,6 +310,11 @@ export default function GuardGateScreen() {
           <View style={s.statBox}>
             <Text style={s.statNum}>{pendingVisitors.length}</Text>
             <Text style={s.statLabel}>Pending</Text>
+          </View>
+          <View style={s.statDivider} />
+          <View style={s.statBox}>
+            <Text style={s.statNum}>{approvedVisitors.length}</Text>
+            <Text style={s.statLabel}>Pre-Approved</Text>
           </View>
           <View style={s.statDivider} />
           <View style={s.statBox}>

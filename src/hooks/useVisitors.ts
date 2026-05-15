@@ -73,6 +73,7 @@ export function useCreateVisitor() {
       visitorName: string;
       visitorPhone: string;
       visitorType: VisitorType;
+      unitNumber?: string;
     }) => createVisitor(input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["visitors"] }),
   });
@@ -84,6 +85,7 @@ export function useCreateVisitorPass() {
     mutationFn: createVisitorPass,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["visitor-passes"] });
+      qc.invalidateQueries({ queryKey: ["visitors"] });
     },
   });
 }

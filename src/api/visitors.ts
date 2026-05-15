@@ -22,14 +22,16 @@ export async function createVisitor(input: {
   visitorName: string;
   visitorPhone?: string;
   visitorType: VisitorType;
+  unitNumber?: string;
 }): Promise<Visitor> {
   const { data } = await apiClient.post("/v1/visitors", {
-    tenantId: input.tenantId,
-    communityId: input.communityId,
-    unitId: input.unitId,
-    visitorName: input.visitorName,
+    tenantId:     input.tenantId,
+    communityId:  input.communityId,
+    unitId:       input.unitId,
+    visitorName:  input.visitorName,
     visitorPhone: input.visitorPhone,
-    visitorType: input.visitorType,
+    visitorType:  input.visitorType,
+    ...(input.unitNumber ? { unitNumber: input.unitNumber } : {}),
   });
   return data;
 }
@@ -56,7 +58,7 @@ export async function checkoutVisitor(id: string, note?: string): Promise<Visito
 
 // Visitor Passes (pre-registration)
 export async function listVisitorPasses(): Promise<VisitorPass[]> {
-  const { data } = await apiClient.get("/v1/visitors/visitor-passes");
+  const { data } = await apiClient.get("/v1/visitor-passes");
   return data.passes ?? data.items ?? data ?? [];
 }
 
@@ -68,7 +70,7 @@ export async function createVisitorPass(input: {
   expectedAt: string;
   expiresAt: string;
 }): Promise<VisitorPass> {
-  const { data } = await apiClient.post("/v1/visitors/visitor-passes", {
+  const { data } = await apiClient.post("/v1/visitor-passes", {
     tenantId: input.tenantId,
     unitId: input.unitId,
     residentId: input.residentId,
